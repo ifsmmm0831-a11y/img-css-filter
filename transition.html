@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이미지 전환 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0c0c;--sf:#161616;--sf2:#1e1e1e;--bd:#2a2a2a;--bdh:#3a3a3a;--tx:#e4e4e4;--txd:#777;--txf:#4a4a4a;--g:#5e7e4f;--gl:#7fa86a;--gbg:rgba(94,126,79,.08);--gld:#c2a878;--gldbg:rgba(194,168,120,.08);--rd:#a85a5a;--r:10px}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;line-height:1.6}
+.hdr{padding:40px 20px 28px;text-align:center;border-bottom:1px solid var(--bd)}.hdr h1{font-family:'Playfair Display',serif;font-size:2rem;letter-spacing:-1px;margin-bottom:4px}.hdr h1 em{font-style:normal;color:var(--gl)}.hdr p{color:var(--txd);font-size:.8rem;font-weight:300}.hdr a{color:var(--gl);text-decoration:none;font-size:.75rem}.hdr a:hover{text-decoration:underline}
+.wrap{max-width:940px;margin:0 auto;padding:24px 20px 80px}
+.step{margin-bottom:22px}.slbl{display:inline-flex;align-items:center;gap:8px;font-size:.76rem;font-weight:600;color:var(--gl);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}.sn{width:22px;height:22px;border-radius:50%;background:var(--g);color:#fff;font-size:.68rem;display:flex;align-items:center;justify-content:center;font-weight:700}
+.cd{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:18px}
+.stitle{font-size:.73rem;font-weight:600;color:var(--gl);margin-bottom:8px}.ssep{margin:14px 0 0;padding-top:14px;border-top:1px solid var(--bd)}
+.tbar{display:flex;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid var(--bd)}.tb{flex:1;padding:8px;background:var(--sf2);border:none;color:var(--txd);font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s}.tb:not(:last-child){border-right:1px solid var(--bd)}.tb.on{background:var(--g);color:#fff}
+.tc{display:none}.tc.on{display:block}
+textarea{width:100%;min-height:60px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:10px;color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:.76rem;line-height:1.4;resize:vertical;outline:none}textarea:focus{border-color:var(--g)}textarea::placeholder{color:#444}
+.dz{border:2px dashed var(--bd);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .3s;position:relative;font-size:.8rem;color:var(--txd)}.dz:hover,.dz.ov{border-color:var(--g);background:var(--gbg)}.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.thumb-pv{margin-top:8px;display:flex;gap:8px;align-items:center}.thumb-pv img{width:64px;height:64px;border-radius:6px;object-fit:cover;border:1px solid var(--bd)}
+.ib{margin-top:8px;padding:7px 10px;border-radius:8px;font-size:.72rem;line-height:1.4;display:none}.ib.sh{display:block}.ib.gld{background:var(--gldbg);border:1px solid rgba(194,168,120,.2);color:var(--gld)}
+.og label{display:block;font-size:.7rem;color:var(--txd);margin-bottom:4px;font-weight:500}.og input,.og select{width:100%;padding:8px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:'Noto Sans KR',sans-serif;font-size:.82rem;outline:none}.og input:focus,.og select:focus{border-color:var(--g)}.og select option{background:var(--sf)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px;margin-top:8px}
+.ci{display:flex;align-items:center;gap:7px;padding:7px 9px;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;cursor:pointer;transition:all .15s;font-size:.76rem;user-select:none}.ci:hover{border-color:var(--bdh)}.ci.on{border-color:var(--g);background:var(--gbg)}.ci input[type=checkbox]{display:none}.cdot{width:13px;height:13px;border-radius:3px;border:2px solid var(--bd);transition:all .15s;flex-shrink:0}.ci.on .cdot{background:var(--g);border-color:var(--g)}
+.fxs{margin-top:10px;display:none}.fxs.sh{display:block}
+.fr{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}.fr .fn{min-width:68px;font-size:.71rem;color:var(--txd)}.fr input[type=range]{flex:1;accent-color:var(--g);min-width:60px}.fr .fv{min-width:40px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--tx)}.fr input[type=color]{width:28px;height:24px;border:1px solid var(--bd);border-radius:5px;background:var(--sf2);cursor:pointer;padding:2px}
+.ab-label{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;font-size:.78rem;font-weight:600;margin-bottom:10px}
+.ab-a{background:rgba(90,127,168,.12);color:#7aa3c8;border:1px solid rgba(90,127,168,.3)}
+.ab-b{background:rgba(194,168,120,.12);color:var(--gld);border:1px solid rgba(194,168,120,.3)}
+.gbtn{display:block;width:100%;padding:13px;margin-top:18px;background:var(--g);color:#fff;border:none;border-radius:var(--r);font-size:.92rem;font-weight:600;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background .2s,transform .1s}.gbtn:hover{background:var(--gl)}.gbtn:active{transform:scale(.98)}
+.sbtn{padding:6px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:.74rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s}.sbtn:hover{border-color:var(--g);color:var(--gl)}
+.res{display:none;margin-top:28px}.res.sh{display:block}.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.rt{font-size:.86rem;font-weight:600}
+.cpb{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:.76rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s}.cpb:hover{border-color:var(--g);color:var(--gl)}.cpb.ok{border-color:var(--g);color:var(--gl)}
+.cbox{background:var(--sf);border:1px solid var(--bd);border-radius:12px;overflow:hidden}.cbox pre{padding:16px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.7rem;line-height:1.6;color:#bbb;white-space:pre;max-height:400px;overflow-y:auto}
+.pvs{margin-top:18px;display:none}.pvs.sh{display:block}.pvl{font-size:.76rem;color:var(--txd);margin-bottom:6px;font-weight:500}.pvf{background:#fff;border-radius:12px;padding:80px 40px;overflow:visible;text-align:center}
+.preset-row{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;margin-bottom:14px;flex-wrap:wrap;min-height:40px}
+.preset-row .pr-label{font-size:.72rem;color:var(--gld);font-weight:600;white-space:nowrap}
+.preset-row .pr-chips{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+.preset-chip{padding:4px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:16px;font-size:.7rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap}.preset-chip:hover{border-color:var(--g);color:var(--gl)}
+.preset-chip .pdel{color:var(--txf);font-size:.55rem;cursor:pointer}.preset-chip .pdel:hover{color:var(--rd)}
+.pr-actions{display:flex;gap:4px;margin-left:auto}
+.pr-btn{padding:4px 8px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;color:var(--txd);font-size:.65rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap}.pr-btn:hover{border-color:var(--g);color:var(--gl)}
+.preset-chip{padding:5px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:18px;font-size:.72rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}.preset-chip:hover{border-color:var(--g);color:var(--gl)}
+.preset-chip .pdel{color:var(--txf);font-size:.58rem;cursor:pointer}.preset-chip .pdel:hover{color:var(--rd)}
+.hidden-input{position:absolute;width:0;height:0;opacity:0;overflow:hidden}
+@media(max-width:600px){.hdr h1{font-size:1.5rem}.opts{grid-template-columns:1fr}.cg{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="hdr">
+<h1>블로그 <em>글꾸</em> 생성기</h1>
+<p>이미지 + 효과 조합 → 순수 CSS/HTML 코드</p>
+</div>
+<div class="wrap">
+<div style="display:flex;gap:0;margin-bottom:24px;border-radius:var(--r);overflow:hidden;border:1px solid var(--bd)">
+<a href="index.html" style="flex:1;padding:11px;background:var(--sf2);color:var(--txd);text-decoration:none;font-size:.82rem;font-weight:500;text-align:center;border-right:1px solid var(--bd)">✨ 필터 & 효과</a>
+<a href="transition.html" style="flex:1;padding:11px;background:var(--g);color:#fff;text-decoration:none;font-size:.82rem;font-weight:600;text-align:center;border-right:1px solid var(--bd)">🔄 이미지 전환</a>
+<a href="scroll.html" style="flex:1;padding:11px;background:var(--sf2);color:var(--txd);text-decoration:none;font-size:.82rem;font-weight:500;text-align:center">🎠 무한 스크롤</a>
+</div>
+
+<!-- 1. 이미지 A -->
+<div class="step"><div class="slbl"><div class="sn">1</div>이미지 A · B</div>
+<div class="cd">
+<div class="ab-label ab-a">🅰 이미지 A (시작)</div>
+<div class="tbar"><button class="tb on" id="a-paste-btn">URL</button><button class="tb" id="a-upload-btn">파일</button></div>
+<div class="tc on" id="a-paste"><textarea id="a-text" placeholder="이미지 A URL"></textarea></div>
+<div class="tc" id="a-upload"><div class="dz" id="dz-a">📁 이미지 A<input type="file" id="fi-a" accept="image/*"></div><div class="thumb-pv" id="th-a"></div></div>
+
+<div class="ssep">
+<div class="ab-label ab-b">🅱 이미지 B (끝)</div>
+</div>
+<div class="tbar"><button class="tb on" id="b-paste-btn">URL</button><button class="tb" id="b-upload-btn">파일</button></div>
+<div class="tc on" id="b-paste"><textarea id="b-text" placeholder="이미지 B URL"></textarea></div>
+<div class="tc" id="b-upload"><div class="dz" id="dz-b">📁 이미지 B<input type="file" id="fi-b" accept="image/*"></div><div class="thumb-pv" id="th-b"></div></div>
+<div class="ib gld" id="up-note">⚠️ 업로드 이미지는 미리보기 전용. 코드의 src를 실제 URL로 교체하세요.</div>
+</div></div>
+
+<!-- 2. 크기 & 전환 -->
+<div class="step"><div class="slbl"><div class="sn">2</div>크기 & 전환</div>
+<div class="cd">
+<div class="opts">
+<div class="og"><label>가로(px)</label><input type="number" id="opt-w" value="280" min="50"></div>
+<div class="og"><label>세로(px)</label><input type="number" id="opt-h" value="180" min="50"></div>
+<div class="og"><label>둥글기(px)</label><input type="number" id="opt-rad" value="8" min="0"></div>
+</div>
+<div class="ssep"><div class="stitle">전환 트리거</div></div>
+<div class="opts">
+<div class="og"><label>방식</label><select id="opt-trigger"><option value="hover">호버 시 전환</option><option value="auto">자동 전환</option></select></div>
+<div class="og"><label>A→B 속도(초)</label><input type="number" id="opt-speed-in" value="0.6" min="0.1" max="10" step="0.1"></div>
+<div class="og"><label>B→A 속도(초)</label><input type="number" id="opt-speed-out" value="0.6" min="0.1" max="10" step="0.1"></div>
+</div>
+<div id="auto-opts" style="display:none;margin-top:8px"><div class="opts">
+<div class="og"><label>대기 시간(초)</label><input type="number" id="opt-delay" value="3" min="0" max="30" step="0.5"></div>
+<div class="og"><label>반복</label><select id="opt-repeat"><option value="infinite">무한 왕복</option><option value="1">1회만</option></select></div>
+</div></div>
+<div class="ssep"><div class="stitle">전환 효과</div></div>
+<div class="cg">
+<label class="ci on" id="fx-fade"><input type="checkbox" checked><div class="cdot"></div>🌫️ 페이드</label>
+<label class="ci" id="fx-zoom"><input type="checkbox"><div class="cdot"></div>🔍 확대</label>
+<label class="ci" id="fx-blur"><input type="checkbox"><div class="cdot"></div>💨 블러</label>
+<label class="ci" id="fx-flip"><input type="checkbox"><div class="cdot"></div>🃏 뒤집기</label>
+</div>
+</div></div>
+
+<!-- 3. 이미지 A 효과 -->
+<div class="step"><div class="slbl"><div class="sn">3</div>이미지 A 효과</div>
+<div class="cd">
+<div class="ab-label ab-a">🅰 필터</div>
+<div class="cg" id="fa-grid"></div><div class="fxs" id="fa-sl"></div>
+<div class="ssep"><div class="ab-label ab-a">🅰 애니메이션</div></div>
+<div class="cg" id="aa-grid"></div>
+<div id="aa-sub" style="margin-top:8px"></div>
+</div></div>
+
+<!-- 4. 이미지 B 효과 -->
+<div class="step"><div class="slbl"><div class="sn">4</div>이미지 B 효과</div>
+<div class="cd">
+<div class="ab-label ab-b">🅱 필터</div>
+<div class="cg" id="fb-grid"></div><div class="fxs" id="fb-sl"></div>
+<div class="ssep"><div class="ab-label ab-b">🅱 애니메이션</div></div>
+<div class="cg" id="ab-grid"></div>
+<div id="ab-sub" style="margin-top:8px"></div>
+</div></div>
+
+<div class="preset-row">
+<span class="pr-label">📌 프리셋</span>
+<div class="pr-chips" id="plist"></div>
+<div class="pr-actions">
+<button class="pr-btn" id="save-btn">💾 저장</button>
+<button class="pr-btn" id="export-btn">📤</button>
+<button class="pr-btn" id="import-btn">📥</button>
+<input type="file" id="imp-file" class="hidden-input" accept=".json">
+</div></div>
+
+<div class="step"><button class="gbtn" id="gen-btn">코드 생성하기</button></div>
+<div class="res" id="result"><div class="rh"><div class="rt">생성된 코드</div><button class="cpb" id="copy-btn">📋 복사</button></div><div class="cbox"><pre id="code-out"></pre></div><div class="pvs" id="pv-sec"><div class="pvl">미리보기</div><div class="pvf" id="pv-frame"></div></div></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const V=(id,d)=>{const e=$(id);return e?e.value:(d!=null?String(d):'')};
+const isOn=id=>$(id)?.querySelector('input')?.checked||false;
+const hexA=(h,a)=>`rgba(${parseInt(h.slice(1,3),16)},${parseInt(h.slice(3,5),16)},${parseInt(h.slice(5,7),16)},${a})`;
+const show=id=>$(id).classList.add('sh');
+function togCI(ci){const cb=ci.querySelector('input');cb.checked=!cb.checked;ci.classList.toggle('on',cb.checked)}
+
+// ─── Filters ───
+const FD={grayscale:{n:'흑백',u:'%',mn:0,mx:100,d:100},sepia:{n:'빈티지',u:'%',mn:0,mx:100,d:80},blur:{n:'흐림',u:'px',mn:0,mx:20,d:5},brightness:{n:'밝기',u:'%',mn:0,mx:200,d:50},contrast:{n:'대비',u:'%',mn:50,mx:200,d:150},invert:{n:'반전',u:'%',mn:0,mx:100,d:100},saturate:{n:'채도',u:'%',mn:0,mx:300,d:200},dropshadow:{n:'후광',u:'px',mn:0,mx:30,d:10}};
+const FXI=[{k:'grayscale',e:'🖤',l:'흑백'},{k:'sepia',e:'📜',l:'빈티지'},{k:'blur',e:'🌫️',l:'흐림'},{k:'brightness',e:'☀️',l:'밝기'},{k:'contrast',e:'🎛️',l:'대비'},{k:'invert',e:'🔄',l:'반전'},{k:'saturate',e:'🎨',l:'채도'},{k:'dropshadow',e:'✨',l:'후광'}];
+
+function buildFG(gid){const el=$(gid);FXI.forEach(f=>{const ci=document.createElement('label');ci.className='ci';ci.dataset.fx=f.k;ci.innerHTML=`<input type="checkbox"><div class="cdot"></div>${f.e} ${f.l}`;ci.onclick=()=>{togCI(ci);rebuildSL(gid)};el.appendChild(ci)})}
+function rebuildSL(gid){const sid=gid.replace('grid','sl');const sl=$(sid);sl.innerHTML='';const ch=document.querySelectorAll('#'+gid+' .ci.on');if(!ch.length){sl.classList.remove('sh');return}sl.classList.add('sh');ch.forEach(ci=>{const k=ci.dataset.fx;const d=FD[k];const row=document.createElement('div');row.className='fr';let ex='';if(k==='dropshadow')ex=`<input type="color" value="#5e7e4f" data-role="color"><input type="range" min="0" max="100" value="80" data-role="alpha" style="max-width:55px"><span class="fv" data-role="alphaval">80%</span>`;row.innerHTML=`<span class="fn">${d.n}</span><input type="range" min="${d.mn}" max="${d.mx}" value="${d.d}" data-fx="${k}"><span class="fv">${d.d}${d.u}</span>${ex}`;row.querySelector('[data-fx]').oninput=function(){this.nextElementSibling.textContent=this.value+d.u};const al=row.querySelector('[data-role=alpha]');if(al)al.oninput=function(){row.querySelector('[data-role=alphaval]').textContent=this.value+'%'};sl.appendChild(row)})}
+function readFL(el){if(!el)return'';const p=[];el.querySelectorAll('.fr').forEach(row=>{const sl=row.querySelector('[data-fx]');if(!sl)return;const fx=sl.dataset.fx,v=sl.value;if(fx==='dropshadow'){const c=row.querySelector('[data-role=color]')?.value||'#5e7e4f';const a=(row.querySelector('[data-role=alpha]')?.value||80)/100;p.push(`drop-shadow(0 0 ${v}px ${hexA(c,a)})`)}else if(fx==='blur')p.push(`blur(${v}px)`);else p.push(`${fx}(${v}${FD[fx].u})`)});return p.join(' ')}
+buildFG('fa-grid');buildFG('fb-grid');
+
+// ─── Animations ───
+const ANIMS=[{k:'floating',e:'🎈',l:'둥둥'},{k:'heartbeat',e:'💓',l:'심장박동'},{k:'shake',e:'🫨',l:'떨기'},{k:'spin',e:'🔄',l:'회전'},{k:'glow',e:'💡',l:'빛나기'},{k:'swing',e:'🎵',l:'흔들흔들'},{k:'bounce',e:'⬆️',l:'통통'},{k:'glitchanim',e:'📺',l:'글리치'}];
+const AF={floating:[{id:'af-d',l:'거리(px)',mn:5,mx:50,d:15},{id:'af-s',l:'속도(초)',mn:.5,mx:10,d:3,s:.5}],heartbeat:[{id:'ah-b',l:'배율',mn:1.05,mx:1.5,d:1.15,s:.01},{id:'ah-s',l:'속도(초)',mn:.3,mx:3,d:1,s:.1}],shake:[{id:'as-d',l:'강도(px)',mn:1,mx:20,d:5},{id:'as-s',l:'속도(초)',mn:.1,mx:2,d:.5,s:.1}],spin:[{id:'asp-d',l:'각도',mn:90,mx:720,d:360,s:90},{id:'asp-dir',l:'방향',type:'sel',opts:['시계','반시계']},{id:'asp-s',l:'속도(초)',mn:.2,mx:3,d:.6,s:.1}],glow:[{id:'ag-sz',l:'크기(px)',mn:5,mx:60,d:20},{id:'ag-c',l:'색상',type:'col',d:'#5e7e4f'},{id:'ag-s',l:'속도(초)',mn:.5,mx:5,d:2,s:.5}],swing:[{id:'asw-d',l:'각도',mn:3,mx:30,d:10},{id:'asw-s',l:'속도(초)',mn:.5,mx:5,d:2,s:.5}],bounce:[{id:'ab-d',l:'높이(px)',mn:5,mx:50,d:15},{id:'ab-s',l:'속도(초)',mn:.3,mx:3,d:1,s:.1}],glitchanim:[{id:'agl-d',l:'강도(px)',mn:1,mx:15,d:3},{id:'agl-s',l:'속도(초)',mn:.1,mx:2,d:.3,s:.1}]};
+
+function buildAnimGrid(gid,subId,prefix){
+const el=$(gid);ANIMS.forEach(a=>{const ci=document.createElement('label');ci.className='ci';ci.dataset.anim=a.k;ci.innerHTML=`<input type="checkbox"><div class="cdot"></div>${a.e} ${a.l}`;ci.onclick=()=>{togCI(ci);buildAnimSub(gid,subId,prefix)};el.appendChild(ci)})}
+function buildAnimSub(gid,subId,pfx){
+const sub=$(subId);sub.innerHTML='';
+const sels=[...document.querySelectorAll('#'+gid+' .ci.on')].map(c=>c.dataset.anim);
+if(!sels.length)return;
+sels.forEach(ak=>{const info=ANIMS.find(a=>a.k===ak);
+const t=document.createElement('div');t.style.cssText='font-size:.7rem;color:var(--gld);margin:6px 0 3px;font-weight:600';t.textContent=`${info.e} ${info.l}`;sub.appendChild(t);
+(AF[ak]||[]).forEach(f=>{const row=document.createElement('div');row.className='fr';const uid=pfx+f.id;
+if(f.type==='col')row.innerHTML=`<span class="fn">${f.l}</span><input type="color" id="${uid}" value="${f.d||'#5e7e4f'}">`;
+else if(f.type==='sel')row.innerHTML=`<span class="fn">${f.l}</span><select id="${uid}" class="mini-select" style="width:auto;flex:1;padding:5px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-size:.78rem">${f.opts.map((o,j)=>`<option value="${j}">${o}</option>`).join('')}</select>`;
+else{row.innerHTML=`<span class="fn">${f.l}</span><input type="range" id="${uid}" min="${f.mn}" max="${f.mx}" value="${f.d}" step="${f.s||1}"><span class="fv">${f.d}</span>`;row.querySelector('input[type=range]').oninput=function(){this.nextElementSibling.textContent=this.value}}
+sub.appendChild(row)});})}
+buildAnimGrid('aa-grid','aa-sub','a-');
+buildAnimGrid('ab-grid','ab-sub','b-');
+
+function getSelAnims(gid){return[...document.querySelectorAll('#'+gid+' .ci.on')].map(c=>c.dataset.anim)}
+function animCSSStr(ak,pfx){
+const v=(id,d)=>V(pfx+id,d);
+const m={floating:`floating ${v('af-s',3)}s ease-in-out infinite`,heartbeat:`heartbeat ${v('ah-s',1)}s ease-in-out infinite`,glow:`glow ${v('ag-s',2)}s ease-in-out infinite`,swing:`swing ${v('asw-s',2)}s ease-in-out infinite`,bounce:`bounce ${v('ab-s',1)}s cubic-bezier(.36,0,.66,1) infinite`,shake:`shake ${v('as-s',.5)}s ease-in-out infinite`,spin:`spin ${v('asp-s',.6)}s linear infinite`,glitchanim:`anim-glitch ${v('agl-s',.3)}s steps(5,end) infinite`};return m[ak]||''}
+function animKF(ak,pfx){
+const v=(id,d)=>V(pfx+id,d);
+if(ak==='floating'){const d=v('af-d',15);return`@keyframes floating{0%{transform:translateY(0)}50%{transform:translateY(-${d}px)}100%{transform:translateY(0)}}`}
+if(ak==='heartbeat'){const b=v('ah-b',1.15);return`@keyframes heartbeat{0%{transform:scale(1)}14%{transform:scale(${(b*.96).toFixed(2)})}28%{transform:scale(1)}42%{transform:scale(${b})}70%,100%{transform:scale(1)}}`}
+if(ak==='shake'){const d=v('as-d',5);return`@keyframes shake{0%,100%{transform:translateX(0)}10%{transform:translateX(-${d}px)}20%{transform:translateX(${d}px)}30%{transform:translateX(-${d}px)}40%{transform:translateX(${d}px)}50%{transform:translateX(-${Math.round(d*.6)}px)}60%{transform:translateX(${Math.round(d*.6)}px)}70%{transform:translateX(0)}}`}
+if(ak==='spin'){const deg=v('asp-d',360),dir=v('asp-dir',0);return`@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(${dir==='1'?'-':''}${deg}deg)}}`}
+if(ak==='glow'){const sz=v('ag-sz',20),col=v('ag-c','#5e7e4f');return`@keyframes glow{0%,100%{box-shadow:0 0 5px ${hexA(col,.3)}}50%{box-shadow:0 0 ${sz}px ${hexA(col,.8)},0 0 ${sz*2}px ${hexA(col,.4)}}}`}
+if(ak==='swing'){const d=v('asw-d',10);return`@keyframes swing{0%{transform:rotate(0)}25%{transform:rotate(${d}deg)}50%{transform:rotate(0)}75%{transform:rotate(-${d}deg)}100%{transform:rotate(0)}}`}
+if(ak==='bounce'){const d=v('ab-d',15);return`@keyframes bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-${d}px)}50%{transform:translateY(0)}70%{transform:translateY(-${Math.round(d*.4)}px)}85%{transform:translateY(0)}}`}
+if(ak==='glitchanim'){const d=v('agl-d',3);return`@keyframes anim-glitch{0%,100%{transform:translate(0)}20%{transform:translate(-${d}px,${Math.round(d*.7)}px)}40%{transform:translate(${d}px,-${Math.round(d*.5)}px)}60%{transform:translate(${Math.round(d*.5)}px,${Math.round(d*.3)}px)}80%{transform:translate(-${Math.round(d*.7)}px,-${Math.round(d*.3)}px)}}`}
+return''}
+
+// ─── Image input ───
+let aDU='',bDU='';
+function setupTab(pfx){
+$(pfx+'-paste-btn').onclick=()=>{$(pfx+'-paste-btn').classList.add('on');$(pfx+'-upload-btn').classList.remove('on');$(pfx+'-paste').classList.add('on');$(pfx+'-upload').classList.remove('on')};
+$(pfx+'-upload-btn').onclick=()=>{$(pfx+'-upload-btn').classList.add('on');$(pfx+'-paste-btn').classList.remove('on');$(pfx+'-upload').classList.add('on');$(pfx+'-paste').classList.remove('on')};
+const dz=$('dz-'+pfx),fi=$('fi-'+pfx);
+dz.ondragover=e=>{e.preventDefault();dz.classList.add('ov')};dz.ondragleave=()=>dz.classList.remove('ov');
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove('ov');loadFile(pfx,e.dataTransfer.files[0])};
+fi.onchange=e=>{loadFile(pfx,e.target.files[0]);e.target.value=''};}
+function loadFile(pfx,f){if(!f||!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=e=>{const du=e.target.result;if(pfx==='a')aDU=du;else bDU=du;$('th-'+pfx).innerHTML=`<img src="${du}">`;$('up-note').classList.add('sh')};r.readAsDataURL(f)}
+setupTab('a');setupTab('b');
+
+function eu(s){const u=[];const r=/src=["']([^"']+)["']/g;let m;while((m=r.exec(s))!==null)u.push(m[1]);if(u.length)return[...new Set(u)];return[...new Set(s.split('\n').map(l=>l.trim()).filter(l=>l.startsWith('http')))]}
+function getImg(pfx,forCode){
+if($(pfx+'-paste-btn').classList.contains('on')){const urls=eu(V(pfx+'-text',''));return urls[0]||''}
+if(forCode)return`이미지${pfx==='a'?'A':'B'}_URL`;
+return pfx==='a'?aDU:bDU}
+
+// ─── UI ───
+$('opt-trigger').onchange=function(){$('auto-opts').style.display=this.value==='auto'?'':'none'};
+['fx-fade','fx-zoom','fx-blur','fx-flip'].forEach(id=>$(id).onclick=()=>togCI($(id)));
+
+// ─── Generate ───
+$('gen-btn').onclick=function(){
+const pvA=getImg('a',false),pvB=getImg('b',false);
+const cA=getImg('a',true),cB=getImg('b',true);
+if(!pvA||!pvB)return alert('이미지 A와 B를 모두 넣어주세요.');
+const w=V('opt-w'),h=V('opt-h'),rad=V('opt-rad');
+const trigger=V('opt-trigger'),speedIn=V('opt-speed-in','0.6'),speedOut=V('opt-speed-out','0.6');
+const delay=V('opt-delay','3'),repeat=V('opt-repeat','infinite');
+const doFade=isOn('fx-fade'),doZoom=isOn('fx-zoom'),doBlur=isOn('fx-blur'),doFlip=isOn('fx-flip');
+const fA=readFL($('fa-sl')),fB=readFL($('fb-sl'));
+const animsA=getSelAnims('aa-grid'),animsB=getSelAnims('ab-grid');
+
+function build(urlA,urlB){
+let css='';
+const allAnims=new Set([...animsA,...animsB]);
+const animAstr=animsA.map(a=>animCSSStr(a,'a-')).filter(Boolean).join(',');
+const animBstr=animsB.map(a=>animCSSStr(a,'b-')).filter(Boolean).join(',');
+
+if(doFlip){
+css+=`.tr-card{width:${w}px;height:${h}px;perspective:1000px;cursor:pointer}\n`;
+css+=`.tr-inner{position:relative;width:100%;height:100%;transition:transform ${speedOut}s ease-in-out;transform-style:preserve-3d}\n`;
+if(trigger==='hover'){
+css+=`.tr-card:hover .tr-inner{transform:rotateY(180deg);transition:transform ${speedIn}s ease-in-out}\n`}
+else{const td=parseFloat(delay)*2+parseFloat(speedIn)*2;const p1=Math.round(parseFloat(delay)/td*100);const p2=Math.round((parseFloat(delay)+parseFloat(speedIn))/td*100);const p3=Math.round((parseFloat(delay)*2+parseFloat(speedIn))/td*100);
+css+=`@keyframes tr-flip{0%,${p1}%{transform:rotateY(0)}${p2}%,${p3}%{transform:rotateY(180deg)}100%{transform:rotateY(0)}}\n.tr-inner{animation:tr-flip ${td}s ease-in-out ${repeat==='1'?'1 forwards':'infinite'}}\n`}
+css+=`.tr-front,.tr-back{position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:${rad}px;overflow:hidden}\n`;
+css+=`.tr-back{transform:rotateY(180deg)}\n`;
+let imgAcss=`width:100%;height:100%;object-fit:cover;display:block`;
+if(fA)imgAcss+=`;filter:${fA}`;if(animAstr)imgAcss+=`;animation:${animAstr}`;
+css+=`.tr-front img{${imgAcss}}\n`;
+let imgBcss=`width:100%;height:100%;object-fit:cover;display:block`;
+if(fB)imgBcss+=`;filter:${fB}`;if(animBstr)imgBcss+=`;animation:${animBstr}`;
+css+=`.tr-back img{${imgBcss}}\n`;
+allAnims.forEach(a=>{const k=animKF(a,animsA.includes(a)?'a-':'b-');if(k)css+=k+'\n'});
+return`<style>\n${css}</style>\n\n<div class="tr-card">\n    <div class="tr-inner">\n        <div class="tr-front"><img src="${urlA}" alt="A" style="opacity:1;outline:none;"></div>\n        <div class="tr-back"><img src="${urlB}" alt="B" style="opacity:1;outline:none;"></div>\n    </div>\n</div>`}
+
+// 페이드/줌/블러
+css+=`.tr-wrap{position:relative;width:${w}px;height:${h}px;border-radius:${rad}px;overflow:visible;cursor:pointer}\n`;
+css+=`.tr-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;border-radius:${rad}px}\n`;
+
+// 기본 상태 — B→A 돌아오는 속도(speedOut)
+let aCSS=`transition:all ${speedOut}s ease-in-out`;
+if(fA)aCSS+=`;filter:${fA}`;
+if(animAstr)aCSS+=`;animation:${animAstr}`;
+css+=`.tr-a{${aCSS}}\n`;
+
+let bCSS=`opacity:0;transition:all ${speedOut}s ease-in-out`;
+if(fB)bCSS+=`;filter:${fB}`;
+if(doZoom)bCSS+=`;transform:scale(1.15)`;
+if(doBlur)bCSS+=`;filter:${fB?fB+' ':''}blur(10px)`;
+css+=`.tr-b{${bCSS}}\n`;
+
+if(trigger==='hover'){
+// 호버 시 — A→B 나타나는 속도(speedIn)
+let aH=`transition:all ${speedIn}s ease-in-out`;
+if(doFade)aH+=';opacity:0';
+if(doZoom)aH+=';transform:scale(0.95)';
+css+=`.tr-wrap:hover .tr-a{${aH}}\n`;
+let bH=`transition:all ${speedIn}s ease-in-out;opacity:1`;
+if(doZoom)bH+=';transform:scale(1)';
+if(doBlur)bH+=`;filter:${fB||'none'}`;
+if(animBstr)bH+=`;animation:${animBstr}`;
+css+=`.tr-wrap:hover .tr-b{${bH}}\n`;
+}else{
+const td=parseFloat(delay)*2+parseFloat(speedIn)*2;
+const p1=Math.round(parseFloat(delay)/td*100);const p2=Math.round((parseFloat(delay)+parseFloat(speedIn))/td*100);
+const p3=Math.round((parseFloat(delay)*2+parseFloat(speedIn))/td*100);
+css+=`@keyframes tr-a-auto{0%,${p1}%{opacity:1${doZoom?';transform:scale(1)':''}}${p2}%,${p3}%{opacity:0${doZoom?';transform:scale(0.95)':''}}100%{opacity:1${doZoom?';transform:scale(1)':''}}}\n`;
+css+=`@keyframes tr-b-auto{0%,${p1}%{opacity:0${doZoom?';transform:scale(1.15)':''}${doBlur?`;filter:${fB?fB+' ':''}blur(10px)`:''}}${p2}%,${p3}%{opacity:1${doZoom?';transform:scale(1)':''}${doBlur?`;filter:${fB||'none'}`:''}}100%{opacity:0${doZoom?';transform:scale(1.15)':''}${doBlur?`;filter:${fB?fB+' ':''}blur(10px)`:''}}}\n`;
+const iter=repeat==='1'?'1 forwards':'infinite';
+css+=`.tr-a{animation:tr-a-auto ${td}s ease-in-out ${iter}${animAstr?','+animAstr:''}}\n`;
+css+=`.tr-b{animation:tr-b-auto ${td}s ease-in-out ${iter}${animBstr?','+animBstr:''}}\n`;
+}
+allAnims.forEach(a=>{const k=animKF(a,animsA.includes(a)?'a-':'b-');if(k)css+=k+'\n'});
+return`<style>\n${css}</style>\n\n<div class="tr-wrap" style="min-height:${h}px">\n    <img class="tr-a" src="${urlA}" alt="A" style="outline:none;">\n    <img class="tr-b" src="${urlB}" alt="B" style="outline:none;">\n</div>`}
+
+const code=build(cA,cB),pv=build(pvA,pvB);
+$('code-out').textContent=code;show('result');$('pv-frame').innerHTML=pv;show('pv-sec');
+$('result').scrollIntoView({behavior:'smooth',block:'start'});
+};
+
+// ─── Presets ───
+const LS_KEY='glkku-tr-presets';
+function getP(){try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]')}catch{return[]}}
+function saveP(l){try{localStorage.setItem(LS_KEY,JSON.stringify(l));return true}catch{alert('localStorage 미지원. JSON 내보내기를 사용하세요.');return false}}
+function collectS(){
+const s={w:V('opt-w'),h:V('opt-h'),rad:V('opt-rad'),trigger:V('opt-trigger'),speedIn:V('opt-speed-in'),speedOut:V('opt-speed-out'),delay:V('opt-delay'),repeat:V('opt-repeat')};
+s.fade=isOn('fx-fade');s.zoom=isOn('fx-zoom');s.blur=isOn('fx-blur');s.flip=isOn('fx-flip');
+s.fxA=[];document.querySelectorAll('#fa-grid .ci.on').forEach(ci=>s.fxA.push(ci.dataset.fx));
+s.fxAsl={};document.querySelectorAll('#fa-sl .fr').forEach(row=>{const sl=row.querySelector('[data-fx]');if(sl)s.fxAsl[sl.dataset.fx]={v:sl.value,color:row.querySelector('[data-role=color]')?.value||'',alpha:row.querySelector('[data-role=alpha]')?.value||''}});
+s.fxB=[];document.querySelectorAll('#fb-grid .ci.on').forEach(ci=>s.fxB.push(ci.dataset.fx));
+s.fxBsl={};document.querySelectorAll('#fb-sl .fr').forEach(row=>{const sl=row.querySelector('[data-fx]');if(sl)s.fxBsl[sl.dataset.fx]={v:sl.value,color:row.querySelector('[data-role=color]')?.value||'',alpha:row.querySelector('[data-role=alpha]')?.value||''}});
+s.animA=getSelAnims('aa-grid');s.animB=getSelAnims('ab-grid');
+s.animAset={};s.animA.forEach(a=>{s.animAset[a]={};(AF[a]||[]).forEach(f=>{s.animAset[a][f.id]=V('a-'+f.id,f.d!=null?String(f.d):'0')})});
+s.animBset={};s.animB.forEach(a=>{s.animBset[a]={};(AF[a]||[]).forEach(f=>{s.animBset[a][f.id]=V('b-'+f.id,f.d!=null?String(f.d):'0')})});
+return s}
+function applyS(s){
+if(s.w)$('opt-w').value=s.w;if(s.h)$('opt-h').value=s.h;if(s.rad)$('opt-rad').value=s.rad;
+if(s.trigger){$('opt-trigger').value=s.trigger;$('auto-opts').style.display=s.trigger==='auto'?'':'none'}
+if(s.speedIn)$('opt-speed-in').value=s.speedIn;if(s.speedOut)$('opt-speed-out').value=s.speedOut;if(s.delay)$('opt-delay').value=s.delay;if(s.repeat)$('opt-repeat').value=s.repeat;
+function setT(id,on){const ci=$(id);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)}
+setT('fx-fade',s.fade!==false);setT('fx-zoom',!!s.zoom);setT('fx-blur',!!s.blur);setT('fx-flip',!!s.flip);
+// Filters
+document.querySelectorAll('#fa-grid .ci').forEach(ci=>{const on=(s.fxA||[]).includes(ci.dataset.fx);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)});rebuildSL('fa-grid');
+if(s.fxAsl)setTimeout(()=>applySlTo('#fa-sl',s.fxAsl),30);
+document.querySelectorAll('#fb-grid .ci').forEach(ci=>{const on=(s.fxB||[]).includes(ci.dataset.fx);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)});rebuildSL('fb-grid');
+if(s.fxBsl)setTimeout(()=>applySlTo('#fb-sl',s.fxBsl),30);
+// Anims
+document.querySelectorAll('#aa-grid .ci').forEach(ci=>{const on=(s.animA||[]).includes(ci.dataset.anim);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)});buildAnimSub('aa-grid','aa-sub','a-');
+if(s.animAset)setTimeout(()=>{Object.entries(s.animAset).forEach(([ak,d])=>{Object.entries(d).forEach(([fid,val])=>{const el=$('a-'+fid);if(el)el.value=val})})},40);
+document.querySelectorAll('#ab-grid .ci').forEach(ci=>{const on=(s.animB||[]).includes(ci.dataset.anim);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)});buildAnimSub('ab-grid','ab-sub','b-');
+if(s.animBset)setTimeout(()=>{Object.entries(s.animBset).forEach(([ak,d])=>{Object.entries(d).forEach(([fid,val])=>{const el=$('b-'+fid);if(el)el.value=val})})},40)}
+function applySlTo(sel,data){Object.entries(data).forEach(([fx,d])=>{const row=[...document.querySelectorAll(sel+' .fr')].find(r=>r.querySelector(`[data-fx="${fx}"]`));if(!row)return;const sl=row.querySelector('[data-fx]');if(sl){sl.value=d.v;sl.nextElementSibling.textContent=d.v+FD[fx].u}if(d.color){const c=row.querySelector('[data-role=color]');if(c)c.value=d.color}if(d.alpha){const a=row.querySelector('[data-role=alpha]');if(a){a.value=d.alpha;row.querySelector('[data-role=alphaval]').textContent=d.alpha+'%'}}})}
+
+function renderP(){const list=getP();const el=$('plist');if(!list.length){el.innerHTML='<span style="font-size:.68rem;color:var(--txf)">없음</span>';return}el.innerHTML='';list.forEach((p,i)=>{const chip=document.createElement('div');chip.className='preset-chip';chip.innerHTML=`<span class="pname">${p.name}</span><span class="pdel">✕</span>`;chip.querySelector('.pname').onclick=()=>applyS(p.settings);chip.querySelector('.pdel').onclick=e=>{e.stopPropagation();if(confirm('삭제?')){const l=getP();l.splice(i,1);saveP(l);renderP()}};el.appendChild(chip)})}
+$('save-btn').onclick=()=>{const name=prompt('프리셋 이름:');if(!name)return;const l=getP();l.push({name,settings:collectS()});if(saveP(l)){renderP();alert('저장!')}};
+$('export-btn').onclick=()=>{const l=getP();if(!l.length)return alert('없음');const b=new Blob([JSON.stringify(l,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='glkku-transition-presets.json';a.click()};
+$('import-btn').onclick=()=>$('imp-file').click();
+$('imp-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw 0;const l=getP();d.forEach(p=>{if(p.name&&p.settings)l.push(p)});saveP(l);renderP();alert(d.length+'개 가져옴')}catch{alert('잘못된 JSON')}};r.readAsText(f);e.target.value=''};
+renderP();
+
+// ─── Copy ───
+$('copy-btn').onclick=()=>{const code=$('code-out').textContent;const btn=$('copy-btn');function ok(){btn.textContent='✅ 복사 완료!';btn.classList.add('ok');setTimeout(()=>{btn.innerHTML='📋 복사';btn.classList.remove('ok')},2000)}if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).then(ok).catch(()=>fbC(code,ok));else fbC(code,ok)};
+function fbC(t,cb){const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cb()}catch{alert('Ctrl+C')}document.body.removeChild(ta)}
+})();
+</script>
+</body>
+</html>

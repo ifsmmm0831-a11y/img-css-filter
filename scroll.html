@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>무한 스크롤 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0c0c;--sf:#161616;--sf2:#1e1e1e;--bd:#2a2a2a;--bdh:#3a3a3a;--tx:#e4e4e4;--txd:#777;--txf:#4a4a4a;--g:#5e7e4f;--gl:#7fa86a;--gbg:rgba(94,126,79,.08);--gld:#c2a878;--gldbg:rgba(194,168,120,.08);--rd:#a85a5a;--r:10px}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;line-height:1.6}
+.hdr{padding:40px 20px 28px;text-align:center;border-bottom:1px solid var(--bd)}.hdr h1{font-family:'Playfair Display',serif;font-size:2rem;letter-spacing:-1px;margin-bottom:4px}.hdr h1 em{font-style:normal;color:var(--gl)}.hdr p{color:var(--txd);font-size:.8rem;font-weight:300}
+.wrap{max-width:940px;margin:0 auto;padding:24px 20px 80px}
+.step{margin-bottom:22px}.slbl{display:inline-flex;align-items:center;gap:8px;font-size:.76rem;font-weight:600;color:var(--gl);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}.sn{width:22px;height:22px;border-radius:50%;background:var(--g);color:#fff;font-size:.68rem;display:flex;align-items:center;justify-content:center;font-weight:700}
+.cd{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:18px}
+.stitle{font-size:.73rem;font-weight:600;color:var(--gl);margin-bottom:8px}.ssep{margin:14px 0 0;padding-top:14px;border-top:1px solid var(--bd)}
+.tbar{display:flex;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid var(--bd)}.tb{flex:1;padding:8px;background:var(--sf2);border:none;color:var(--txd);font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s}.tb:not(:last-child){border-right:1px solid var(--bd)}.tb.on{background:var(--g);color:#fff}
+.tc{display:none}.tc.on{display:block}
+textarea{width:100%;min-height:100px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:10px;color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:.76rem;line-height:1.5;resize:vertical;outline:none}textarea:focus{border-color:var(--g)}textarea::placeholder{color:#444}
+.ht{margin-top:6px;font-size:.7rem;color:var(--txd)}.ht code{background:var(--sf2);padding:1px 4px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:.66rem}
+.dz{border:2px dashed var(--bd);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .3s;position:relative;font-size:.8rem;color:var(--txd)}.dz:hover,.dz.ov{border-color:var(--g);background:var(--gbg)}.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.thl{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.thi{position:relative;width:72px;height:72px;border-radius:6px;overflow:hidden;border:1px solid var(--bd)}.thi img{width:100%;height:100%;object-fit:cover}.thrm{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,.7);border:none;border-radius:50%;color:#fff;font-size:.58rem;cursor:pointer;display:flex;align-items:center;justify-content:center}.thrm:hover{background:var(--rd)}.tho{position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.7);color:#fff;font-size:.55rem;padding:1px 4px;border-radius:3px}
+.ib{margin-top:8px;padding:7px 10px;border-radius:8px;font-size:.72rem;line-height:1.4;display:none}.ib.sh{display:block}.ib.gld{background:var(--gldbg);border:1px solid rgba(194,168,120,.2);color:var(--gld)}.ib.grn{background:var(--gbg);border:1px solid rgba(94,126,79,.25);color:var(--gl)}
+.og label{display:block;font-size:.7rem;color:var(--txd);margin-bottom:4px;font-weight:500}.og input,.og select{width:100%;padding:8px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:'Noto Sans KR',sans-serif;font-size:.82rem;outline:none}.og input:focus,.og select:focus{border-color:var(--g)}.og select option{background:var(--sf)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.rr{display:flex;align-items:center;gap:8px;margin-top:4px}.rr input[type=range]{flex:1;accent-color:var(--g)}.rv{min-width:40px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--gl)}
+.lis{margin-top:14px;display:none}.lis.sh{display:block}.lt{font-size:.73rem;color:var(--gld);margin-bottom:7px;font-weight:500}.lr{display:flex;align-items:center;gap:8px;margin-bottom:5px}.lr span{font-size:.68rem;color:var(--txd);min-width:46px;font-family:'JetBrains Mono',monospace}.lr input{flex:1;padding:7px 9px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-size:.78rem;outline:none}.lr input:focus{border-color:var(--gld)}
+.gbtn{display:block;width:100%;padding:13px;margin-top:18px;background:var(--g);color:#fff;border:none;border-radius:var(--r);font-size:.92rem;font-weight:600;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background .2s,transform .1s}.gbtn:hover{background:var(--gl)}.gbtn:active{transform:scale(.98)}
+.res{display:none;margin-top:28px}.res.sh{display:block}.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.rt{font-size:.86rem;font-weight:600}
+.cpb{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:.76rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s}.cpb:hover{border-color:var(--g);color:var(--gl)}.cpb.ok{border-color:var(--g);color:var(--gl)}
+.cbox{background:var(--sf);border:1px solid var(--bd);border-radius:12px;overflow:hidden}.cbox pre{padding:16px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.7rem;line-height:1.6;color:#bbb;white-space:pre;max-height:400px;overflow-y:auto}
+.pvs{margin-top:18px;display:none}.pvs.sh{display:block}.pvl{font-size:.76rem;color:var(--txd);margin-bottom:6px;font-weight:500}.pvf{background:#fff;border-radius:12px;padding:30px 20px;overflow:hidden;min-height:80px}
+.preset-row{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;margin-bottom:14px;flex-wrap:wrap;min-height:40px}
+.preset-row .pr-label{font-size:.72rem;color:var(--gld);font-weight:600;white-space:nowrap}
+.preset-row .pr-chips{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+.preset-chip{padding:4px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:16px;font-size:.7rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap}.preset-chip:hover{border-color:var(--g);color:var(--gl)}
+.preset-chip .pdel{color:var(--txf);font-size:.55rem;cursor:pointer}.preset-chip .pdel:hover{color:var(--rd)}
+.pr-actions{display:flex;gap:4px;margin-left:auto}
+.pr-btn{padding:4px 8px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;color:var(--txd);font-size:.65rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap}.pr-btn:hover{border-color:var(--g);color:var(--gl)}
+.hidden-input{position:absolute;width:0;height:0;opacity:0;overflow:hidden}
+@media(max-width:600px){.hdr h1{font-size:1.5rem}.opts{grid-template-columns:1fr}.thi{width:60px;height:60px}}
+</style>
+</head>
+<body>
+<div class="hdr"><h1>블로그 <em>글꾸</em> 생성기</h1><p>이미지 + 효과 조합 → 순수 CSS/HTML 코드</p></div>
+<div class="wrap">
+<div style="display:flex;gap:0;margin-bottom:24px;border-radius:var(--r);overflow:hidden;border:1px solid var(--bd)">
+<a href="index.html" style="flex:1;padding:11px;background:var(--sf2);color:var(--txd);text-decoration:none;font-size:.82rem;font-weight:500;text-align:center;border-right:1px solid var(--bd)">✨ 필터 & 효과</a>
+<a href="transition.html" style="flex:1;padding:11px;background:var(--sf2);color:var(--txd);text-decoration:none;font-size:.82rem;font-weight:500;text-align:center;border-right:1px solid var(--bd)">🔄 이미지 전환</a>
+<a href="scroll.html" style="flex:1;padding:11px;background:var(--g);color:#fff;text-decoration:none;font-size:.82rem;font-weight:600;text-align:center">🎠 무한 스크롤</a>
+</div>
+
+<!-- 1. 이미지 -->
+<div class="step"><div class="slbl"><div class="sn">1</div>이미지</div>
+<div class="cd">
+<div class="tbar"><button class="tb on" id="paste-btn">URL 붙여넣기</button><button class="tb" id="upload-btn">직접 올리기</button></div>
+<div class="tc on" id="tab-paste"><textarea id="txt-input" placeholder="이미지 URL 또는 <p><img src=...> 코드를 붙여넣으세요"></textarea><div class="ht"><code>&lt;p&gt;&lt;img&gt;</code> 형식 또는 URL 한 줄씩</div></div>
+<div class="tc" id="tab-upload"><div class="dz" id="dropzone">📁 드래그 또는 클릭<input type="file" id="file-input" multiple accept="image/*"></div><div class="thl" id="thumb-list"></div><div class="ib gld" id="up-note">⚠️ 미리보기 전용. src를 실제 URL로 교체하세요.</div><div class="ib grn" id="ratio-hint"></div></div>
+</div></div>
+
+<!-- 2. 설정 -->
+<div class="step"><div class="slbl"><div class="sn">2</div>설정</div>
+<div class="cd">
+<div class="opts">
+<div class="og"><label>템플릿</label><select id="tpl"><option value="basic">기본 무한 스크롤</option><option value="bw">흑백 무한 스크롤</option><option value="tarot-label">타로카드 (라벨 O)</option><option value="tarot-nolabel">타로카드 (라벨 X)</option></select></div>
+<div class="og"><label>속도 (초)</label><input type="number" id="spd" value="8" min="1" max="120"></div>
+<div class="og"><label>가로 (px)</label><input type="number" id="opt-w" value="280" min="50"></div>
+<div class="og"><label>세로 (px)</label><input type="number" id="opt-h" value="180" min="50"></div>
+<div class="og" id="gap-g"><label>간격 (px)</label><input type="number" id="opt-gap" value="15" min="0"></div>
+</div>
+<div id="ratio-ctrl" style="margin-top:12px;display:none"><label style="font-size:.7rem;color:var(--txd)">세로 비율</label><div class="rr"><span style="font-size:.68rem;color:var(--txf)">50%</span><input type="range" id="ratio-sl" min="50" max="200" value="100"><span style="font-size:.68rem;color:var(--txf)">200%</span><div class="rv" id="ratio-val">100%</div></div></div>
+<div class="lis" id="lbl-sec"><div class="lt">✦ 각 카드의 라벨</div><div id="lbl-list"></div></div>
+</div></div>
+
+<!-- 프리셋 + 생성 -->
+<div class="preset-row">
+<span class="pr-label">📌 프리셋</span>
+<div class="pr-chips" id="plist"></div>
+<div class="pr-actions">
+<button class="pr-btn" id="save-btn">💾 저장</button>
+<button class="pr-btn" id="export-btn">📤</button>
+<button class="pr-btn" id="import-btn">📥</button>
+<input type="file" id="imp-file" class="hidden-input" accept=".json">
+</div></div>
+<div class="step"><button class="gbtn" id="gen-btn">코드 생성하기</button></div>
+
+<div class="res" id="result"><div class="rh"><div class="rt">생성된 코드</div><button class="cpb" id="copy-btn">📋 복사</button></div><div class="cbox"><pre id="code-out"></pre></div><div class="pvs" id="pv-sec"><div class="pvl">미리보기</div><div class="pvf" id="pv-frame"></div></div></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const V=(id,d)=>{const e=$(id);return e?e.value:(d!=null?String(d):'')};
+const show=id=>$(id).classList.add('sh');
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+
+// ─── Tab ───
+let curTab='paste';
+$('paste-btn').onclick=()=>{curTab='paste';$('paste-btn').classList.add('on');$('upload-btn').classList.remove('on');$('tab-paste').classList.add('on');$('tab-upload').classList.remove('on')};
+$('upload-btn').onclick=()=>{curTab='upload';$('upload-btn').classList.add('on');$('paste-btn').classList.remove('on');$('tab-upload').classList.add('on');$('tab-paste').classList.remove('on')};
+
+// ─── URL ───
+function eu(s){const u=[];const r=/src=["']([^"']+)["']/g;let m;while((m=r.exec(s))!==null)u.push(m[1]);if(u.length)return[...new Set(u)];return[...new Set(s.split('\n').map(l=>l.trim()).filter(l=>l.startsWith('http')))]}
+function getImgs(){if(curTab==='paste')return eu(V('txt-input')).map(u=>({url:u,pv:u}));return files.map((f,i)=>({url:`이미지${i+1}_URL`,pv:f.du}))}
+
+// ─── Files ───
+const files=[];let bnw=0,bnh=0;
+const dz=$('dropzone'),fi=$('file-input');
+dz.ondragover=e=>{e.preventDefault();dz.classList.add('ov')};dz.ondragleave=()=>dz.classList.remove('ov');
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove('ov');addF(e.dataTransfer.files)};
+fi.onchange=e=>{addF(e.target.files);e.target.value=''};
+function addF(fl){let first=!files.length;[...fl].forEach(f=>{if(!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=e=>{const du=e.target.result;const im=new Image();im.onload=()=>{files.push({du,nw:im.naturalWidth,nh:im.naturalHeight});if(first){first=false;bnw=im.naturalWidth;bnh=im.naturalHeight;autoR()}rndTh();$('up-note').classList.add('sh');ulbl()};im.src=du};r.readAsDataURL(f)})}
+window.rmF=function(i){files.splice(i,1);rndTh();if(!files.length){$('up-note').classList.remove('sh');$('ratio-ctrl').style.display='none';$('ratio-hint').classList.remove('sh')}ulbl()};
+function rndTh(){const el=$('thumb-list');el.innerHTML='';files.forEach((f,i)=>{const d=document.createElement('div');d.className='thi';d.innerHTML=`<img src="${f.du}"><button class="thrm" onclick="rmF(${i})">✕</button><div class="tho">${i+1}</div>`;el.appendChild(d)})}
+function autoR(){const bw=parseInt(V('opt-w'))||280;$('opt-h').value=Math.round(bw*(bnh/bnw));$('ratio-ctrl').style.display='block';$('ratio-sl').value=100;$('ratio-val').textContent='100%';const g=gcd(bnw,bnh);$('ratio-hint').innerHTML=`📐 ${bnw}×${bnh} (${bnw/g}:${bnh/g})`;$('ratio-hint').classList.add('sh')}
+$('ratio-sl').oninput=function(){$('ratio-val').textContent=this.value+'%';if(!bnw)return;$('opt-h').value=Math.round((parseInt(V('opt-w'))||280)*(bnh/bnw)*(this.value/100))};
+$('opt-w').oninput=function(){if(!bnw||curTab!=='upload')return;const p=parseInt(V('ratio-sl'))||100;$('opt-h').value=Math.round(+this.value*(bnh/bnw)*(p/100))};
+
+// ─── Template ───
+$('tpl').onchange=function(){const v=this.value,iT=v.startsWith('tarot');if(iT){$('opt-h').value=410;$('opt-w').value=280}else if(files.length&&curTab==='upload')autoR();else $('opt-h').value=180;$('gap-g').style.display=iT?'none':'';$('lbl-sec').classList.toggle('sh',v==='tarot-label');if(iT)$('ratio-ctrl').style.display='none';else if(files.length)$('ratio-ctrl').style.display='block';ulbl()};
+$('txt-input').oninput=ulbl;
+function ulbl(){const imgs=getImgs();const l=$('lbl-list');if(V('tpl')!=='tarot-label'||!imgs.length){l.innerHTML='';return}const ex={};l.querySelectorAll('input').forEach((inp,i)=>{ex[i]=inp.value});l.innerHTML='';imgs.forEach((_,i)=>{const r=document.createElement('div');r.className='lr';r.innerHTML=`<span>카드${i+1}</span><input type="text" class="li" placeholder="라벨" value="${ex[i]||''}">`;l.appendChild(r)})}
+
+// ─── Generate ───
+$('gen-btn').onclick=function(){
+const imgs=getImgs();if(!imgs.length)return alert('이미지를 넣어주세요.');
+const t=V('tpl'),s=V('spd'),w=V('opt-w'),h=V('opt-h'),g=V('opt-gap');
+const cu=imgs.map(i=>i.url),pu=imgs.map(i=>i.pv);
+let code,pc;
+if(t==='basic'){code=mB(cu,s,w,h,g);pc=mB(pu,s,w,h,g)}
+else if(t==='bw'){code=mW(cu,s,w,h,g);pc=mW(pu,s,w,h,g)}
+else if(t==='tarot-label'){const lb=[...document.querySelectorAll('.li')].map(e=>e.value||'');code=mT(cu,s,w,h,lb,1);pc=mT(pu,s,w,h,lb,1)}
+else{code=mT(cu,s,w,h,[],0);pc=mT(pu,s,w,h,[],0)}
+$('code-out').textContent=code;show('result');$('pv-frame').innerHTML=pc;show('pv-sec');
+$('result').scrollIntoView({behavior:'smooth',block:'start'})};
+
+function mB(u,s,w,h,g){const hg=(g/2).toFixed(1).replace(/\.0$/,'');const im=u.map((x,i)=>`        <img src="${x}" alt="사진${i+1}" style="opacity:1;outline:none;">`).join('\n');return`<style>\n    .scroll-container{overflow:hidden;width:100%;padding-bottom:15px;position:relative}\n    .scroll-track{display:flex;gap:${g}px;width:max-content;animation:loop-scroll ${s}s linear infinite}\n    .scroll-container:hover .scroll-track{animation-play-state:paused}\n    .scroll-track img{flex:0 0 auto;width:${w}px;height:${h}px;border-radius:8px;object-fit:cover;box-shadow:0 4px 8px rgba(0,0,0,.3);transition:transform .3s,outline .3s;cursor:pointer}\n    .scroll-track img:hover{transform:scale(1.05);z-index:10;outline:3px solid #5e7e4f}\n    @keyframes loop-scroll{0%{transform:translateX(0)}100%{transform:translateX(calc(-50% - ${hg}px))}}\n</style>\n\n<div class="scroll-container">\n    <div class="scroll-track">\n\n${im}\n\n        <!-- 복제본 -->\n${im}\n\n    </div>\n</div>`}
+
+function mW(u,s,w,h,g){const hg=(g/2).toFixed(1).replace(/\.0$/,'');const im=u.map((x,i)=>`        <img src="${x}" alt="흑백${i+1}" style="opacity:1;outline:none;">`).join('\n');return`<style>\n    .bw-container{overflow:hidden;width:100%;padding:20px 0;position:relative}\n    .bw-track{display:flex;gap:${g}px;width:max-content;animation:bw-scroll ${s}s linear infinite}\n    .bw-container:hover .bw-track{animation-play-state:paused}\n    .bw-track img{flex:0 0 auto;width:${w}px;height:${h}px;object-fit:cover;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,.3);filter:grayscale(100%);transition:filter .4s,transform .4s,box-shadow .4s;cursor:pointer}\n    .bw-track img:hover{filter:grayscale(0%);transform:scale(1.08);z-index:10;box-shadow:0 8px 20px rgba(0,0,0,.4)}\n    @keyframes bw-scroll{0%{transform:translateX(0)}100%{transform:translateX(calc(-50% - ${hg}px))}}\n</style>\n\n<div class="bw-container">\n    <div class="bw-track">\n\n${im}\n\n        <!-- 복제본 -->\n${im}\n\n    </div>\n</div>`}
+
+function mT(u,s,w,h,lb,hl){const mr=24,tot=(+w+mr)*u.length;function cd(url,i){const sz=`width:${w}px;height:${h}px;min-height:${h}px;`;const l=hl&&lb[i]?`\n                <div class="card-back-label">${lb[i]}</div>`:'';return`        <div class="card" style="${sz}"><div class="card-inner" style="${sz}">\n            <div class="card-front" style="${sz}"><div class="card-front-design" style="${sz}"></div></div>\n            <div class="card-back" style="${sz}">\n                <img src="${url}" alt="카드${i+1}" style="${sz}object-fit:cover;display:block;opacity:1;outline:none;">${l}\n            </div>\n        </div></div>`}const o=u.map((x,i)=>cd(x,i)).join('\n\n'),c=u.map((x,i)=>cd(x,i)).join('\n\n');const lc=hl?'\n    .card-back-label{position:absolute;bottom:0;left:0;right:0;padding:10px 8px;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff;font-size:.75rem;font-weight:500;text-align:center}':'';return`<style>\n    .tarot-container{overflow:hidden;width:100%;padding:30px 0;position:relative}\n    .tarot-track{display:flex;gap:0;width:max-content;animation:tarot-scroll ${s}s linear infinite}\n    .tarot-container:hover .tarot-track{animation-play-state:paused}\n    .card{flex:0 0 auto;width:${w}px!important;height:${h}px!important;min-width:${w}px!important;max-width:${w}px!important;min-height:${h}px!important;max-height:${h}px!important;margin-right:${mr}px;cursor:grab;perspective:800px;transition:transform .3s}\n    .card:hover{transform:translateY(-6px)}\n    .card-inner{position:relative;width:${w}px!important;height:${h}px!important;min-height:${h}px!important;transition:transform .6s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}\n    .card:hover .card-inner{transform:rotateY(180deg)}\n    .card-front,.card-back{position:absolute;top:0;left:0;width:${w}px!important;height:${h}px!important;min-height:${h}px!important;backface-visibility:hidden;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.2);overflow:hidden}\n    .card-front{background:linear-gradient(135deg,#2c3e2d,#1a2520);display:flex;align-items:center;justify-content:center}\n    .card-front-design{width:${w}px!important;height:${h}px!important;min-height:${h}px!important;display:flex;align-items:center;justify-content:center;position:relative}\n    .card-front-design::before{content:'';position:absolute;inset:10px;border:2px solid rgba(194,168,120,.45);border-radius:8px}\n    .card-front-design::after{content:'\\2726';font-size:3rem;color:rgba(194,168,120,.65);animation:pulse-star 2.5s ease-in-out infinite}\n    @keyframes pulse-star{0%,100%{opacity:.5;transform:scale(1) rotate(0)}50%{opacity:1;transform:scale(1.12) rotate(12deg)}}\n    .card-back{transform:rotateY(180deg)}\n    .card-back img{width:${w}px!important;height:${h}px!important;min-height:${h}px!important;object-fit:cover!important;display:block!important;margin:0!important;padding:0!important}${lc}\n    @keyframes tarot-scroll{0%{transform:translateX(0)}100%{transform:translateX(-${tot}px)}}\n</style>\n\n<div class="tarot-container">\n    <div class="tarot-track">\n\n${o}\n\n        <!-- 복제본 -->\n${c}\n\n    </div>\n</div>`}
+
+// ─── Presets ───
+const LS='glkku-scroll-presets';
+function getP(){try{return JSON.parse(localStorage.getItem(LS)||'[]')}catch{return[]}}
+function saveP(l){try{localStorage.setItem(LS,JSON.stringify(l));return true}catch{alert('localStorage 미지원. JSON 내보내기를 사용하세요.');return false}}
+function collectS(){return{tpl:V('tpl'),spd:V('spd'),w:V('opt-w'),h:V('opt-h'),gap:V('opt-gap')}}
+function applyS(s){if(s.tpl){$('tpl').value=s.tpl;$('tpl').dispatchEvent(new Event('change'))}if(s.spd)$('spd').value=s.spd;if(s.w)$('opt-w').value=s.w;if(s.h)$('opt-h').value=s.h;if(s.gap)$('opt-gap').value=s.gap}
+function renderP(){const list=getP();const el=$('plist');if(!list.length){el.innerHTML='<span style="font-size:.68rem;color:var(--txf)">없음</span>';return}el.innerHTML='';list.forEach((p,i)=>{const chip=document.createElement('div');chip.className='preset-chip';chip.innerHTML=`<span class="pname">${p.name}</span><span class="pdel">✕</span>`;chip.querySelector('.pname').onclick=()=>applyS(p.settings);chip.querySelector('.pdel').onclick=e=>{e.stopPropagation();if(confirm('삭제?')){const l=getP();l.splice(i,1);saveP(l);renderP()}};el.appendChild(chip)})}
+$('save-btn').onclick=()=>{const name=prompt('프리셋 이름:');if(!name)return;const l=getP();l.push({name,settings:collectS()});if(saveP(l)){renderP();alert('저장!')}};
+$('export-btn').onclick=()=>{const l=getP();if(!l.length)return alert('없음');const b=new Blob([JSON.stringify(l,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='glkku-scroll-presets.json';a.click()};
+$('import-btn').onclick=()=>$('imp-file').click();
+$('imp-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw 0;const l=getP();d.forEach(p=>{if(p.name&&p.settings)l.push(p)});saveP(l);renderP();alert(d.length+'개 가져옴')}catch{alert('잘못된 JSON')}};r.readAsText(f);e.target.value=''};
+renderP();
+
+// ─── Copy ───
+$('copy-btn').onclick=()=>{const code=$('code-out').textContent;const btn=$('copy-btn');function ok(){btn.textContent='✅ 복사 완료!';btn.classList.add('ok');setTimeout(()=>{btn.innerHTML='📋 복사';btn.classList.remove('ok')},2000)}if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).then(ok).catch(()=>fbC(code,ok));else fbC(code,ok)};
+function fbC(t,cb){const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cb()}catch{alert('Ctrl+C로 복사해주세요')}document.body.removeChild(ta)}
+})();
+</script>
+</body>
+</html>
