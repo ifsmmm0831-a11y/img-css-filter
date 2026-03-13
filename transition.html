@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>이미지 전환 생성기</title>
+<title>반전 이미지 생성기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
@@ -35,7 +35,7 @@ textarea{width:100%;min-height:60px;background:var(--sf2);border:1px solid var(-
 .res{display:none;margin-top:28px}.res.sh{display:block}.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.rt{font-size:.86rem;font-weight:600}
 .cpb{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:.76rem;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s}.cpb:hover{border-color:var(--g);color:var(--gl)}.cpb.ok{border-color:var(--g);color:var(--gl)}
 .cbox{background:var(--sf);border:1px solid var(--bd);border-radius:12px;overflow:hidden}.cbox pre{padding:16px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.7rem;line-height:1.6;color:#bbb;white-space:pre;max-height:400px;overflow-y:auto}
-.pvs{margin-top:18px;display:none}.pvs.sh{display:block}.pvl{font-size:.76rem;color:var(--txd);margin-bottom:6px;font-weight:500}.pvf{background:#fff;border-radius:12px;padding:40px;overflow:visible;text-align:center;min-height:350px}
+.pvs{margin-top:18px;display:none}.pvs.sh{display:block}.pvl{font-size:.76rem;color:var(--txd);margin-bottom:6px;font-weight:500}.pvf{background:#fff;border-radius:12px;padding:50px 30px;overflow:visible;min-height:80px}
 .preset-row{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;margin-bottom:14px;flex-wrap:wrap;min-height:40px}
 .preset-row .pr-label{font-size:.72rem;color:var(--gld);font-weight:600;white-space:nowrap}
 .preset-row .pr-chips{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
@@ -52,6 +52,7 @@ textarea{width:100%;min-height:60px;background:var(--sf2);border:1px solid var(-
 <body>
 <div class="hdr">
 <h1><em>반전</em> 이미지 생성기</h1>
+<p>이미지 + 효과 조합 → 순수 CSS/HTML 코드</p>
 </div>
 <div class="wrap">
 <div style="display:flex;gap:0;margin-bottom:24px;border-radius:var(--r);overflow:hidden;border:1px solid var(--bd)">
@@ -135,7 +136,13 @@ textarea{width:100%;min-height:60px;background:var(--sf2);border:1px solid var(-
 </div></div>
 
 <div class="step"><button class="gbtn" id="gen-btn">코드 생성하기</button></div>
-<div class="res" id="result"><div class="rh"><div class="rt">생성된 코드</div><button class="cpb" id="copy-btn">📋 복사</button></div><div class="cbox"><pre id="code-out"></pre></div><div class="pvs" id="pv-sec"><div class="pvl">미리보기</div><div class="pvf" id="pv-frame"></div></div></div>
+<div class="res" id="result"><div class="rh"><div class="rt">생성된 코드</div><button class="cpb" id="copy-btn">📋 복사</button></div><div class="cbox"><pre id="code-out"></pre></div>
+
+
+<div class="pvs" id="pv-sec"><div class="pvl">미리보기</div><div class="pvf" id="pv-frame"></div></div></div>
+
+
+
 </div>
 
 <script>
@@ -252,8 +259,9 @@ allAnims.forEach(a=>{const k=animKF(a,animsA.includes(a)?'a-':'b-');if(k)css+=k+
 return`<style>\n${css}</style>\n\n<div class="tr-card">\n    <div class="tr-inner">\n        <div class="tr-front"><img src="${urlA}" alt="A" style="opacity:1;outline:none;"></div>\n        <div class="tr-back"><img src="${urlB}" alt="B" style="opacity:1;outline:none;"></div>\n    </div>\n</div>`}
 
 // 페이드/줌/블러
-css+=`.tr-wrap{position:relative;width:${w}px;height:${h}px;border-radius:${rad}px;overflow:visible;cursor:pointer}\n`;
-css+=`.tr-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;border-radius:${rad}px}\n`;
+css+=`.tr-wrap{position:relative;width:${w}px;border-radius:${rad}px;overflow:visible;cursor:pointer;margin:0 auto}\n`;
+css+=`.tr-wrap img{width:100%;height:auto;display:block;border-radius:${rad}px}\n`;
+css+=`.tr-b{position:absolute;top:0;left:0}\n`;
 
 // 기본 상태 — B→A 돌아오는 속도(speedOut)
 let aCSS=`transition:all ${speedOut}s ease-in-out`;
@@ -289,12 +297,10 @@ css+=`.tr-a{animation:tr-a-auto ${td}s ease-in-out ${iter}${animAstr?','+animAst
 css+=`.tr-b{animation:tr-b-auto ${td}s ease-in-out ${iter}${animBstr?','+animBstr:''}}\n`;
 }
 allAnims.forEach(a=>{const k=animKF(a,animsA.includes(a)?'a-':'b-');if(k)css+=k+'\n'});
-return`<style>\n${css}</style>\n\n<div class="tr-wrap" style="min-height:${h}px">\n    <img class="tr-a" src="${urlA}" alt="A" style="outline:none;">\n    <img class="tr-b" src="${urlB}" alt="B" style="outline:none;">\n</div>`}
+return`<style>\n${css}</style>\n\n<div class="tr-wrap">\n    <img class="tr-a" src="${urlA}" alt="A" style="outline:none;">\n    <img class="tr-b" src="${urlB}" alt="B" style="outline:none;">\n</div>`}
 
 const code=build(cA,cB),pv=build(pvA,pvB);
 $('code-out').textContent=code;show('result');$('pv-frame').innerHTML=pv;show('pv-sec');
-// 미리보기 높이 보장
-$('pv-frame').style.minHeight=(parseInt(h)+100)+'px';
 $('result').scrollIntoView({behavior:'smooth',block:'start'});
 };
 
