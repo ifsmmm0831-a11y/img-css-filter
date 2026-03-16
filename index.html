@@ -87,6 +87,7 @@ textarea{width:100%;min-height:100px;background:var(--sf2);border:1px solid var(
 <div class="og"><label>세로(px)</label><input type="number" id="opt-h" value="180" min="50"></div>
 <div class="og"><label>둥글기(px)</label><input type="number" id="opt-rad" value="8" min="0"></div>
 <div class="og"><label>간격(px)</label><input type="number" id="opt-gap" value="15" min="0"></div>
+<div class="og"><label>클래스 접두사</label><input type="text" id="opt-classname" value="fx" placeholder="fx" style="font-family:'JetBrains Mono',monospace"></div>
 </div>
 <div id="ratio-ctrl" style="margin-top:12px;display:none"><label style="font-size:.7rem;color:var(--txd)">세로 비율</label><div class="rr"><span style="font-size:.68rem;color:var(--txf)">50%</span><input type="range" id="ratio-sl" min="50" max="200" value="100"><span style="font-size:.68rem;color:var(--txf)">200%</span><div class="rv" id="ratio-val">100%</div></div></div>
 </div></div>
@@ -112,9 +113,12 @@ textarea{width:100%;min-height:100px;background:var(--sf2);border:1px solid var(
 <div class="og"><label>확대</label><input type="number" id="opt-scale" value="1.05" min="1" max="2" step="0.01"></div>
 <div class="og"><label>기울기(deg)</label><input type="number" id="opt-tilt" value="0" min="-45" max="45"></div>
 </div></div>
-<div class="ssep"><div class="stitle">🎬 애니메이션</div></div>
+<div class="ssep"><div class="stitle">🎬 기본 애니메이션</div></div>
 <div class="cg" id="anim-grid"></div>
 <div id="anim-sub" style="display:none;margin-top:10px;padding:12px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px"><div id="anim-sub-c"></div></div>
+<div class="ssep"><div class="stitle">🎬 호버 애니메이션</div></div>
+<div class="cg" id="anim-hov-grid"></div>
+<div id="anim-hov-sub" style="display:none;margin-top:10px;padding:12px;background:var(--sf2);border:1px solid var(--bd);border-radius:8px"><div id="anim-hov-sub-c"></div></div>
 <div id="wave-opts" style="display:none;margin-top:10px"><div class="fr"><span class="fn">딜레이 간격</span><input type="range" id="wave-delay" min="0.1" max="2" value="0.3" step="0.1"><span class="fv">0.3s</span></div></div>
 <div class="ssep"><div class="stitle">✨ 특수</div></div>
 <div class="cg"><label class="ci" id="sp-vig"><input type="checkbox"><div class="cdot"></div>🔲 비네팅</label><label class="ci" id="sp-gli"><input type="checkbox"><div class="cdot"></div>📺 글리치</label><label class="ci" id="sp-flip"><input type="checkbox"><div class="cdot"></div>🃏 타로 뒤집기</label><label class="ci" id="sp-autofx"><input type="checkbox"><div class="cdot"></div>🔄 자동 필터 전환</label></div>
@@ -168,6 +172,15 @@ $('tab-upload-btn').onclick=()=>{curTab='upload';$('tab-upload-btn').classList.a
 function eu(s){const u=[];const r=/src=["']([^"']+)["']/g;let m;while((m=r.exec(s))!==null)u.push(m[1]);if(u.length)return[...new Set(u)];return[...new Set(s.split('\n').map(l=>l.trim()).filter(l=>l.startsWith('http')))]}
 function getImgs(){if(curTab==='paste')return eu(V('txt-input')).map(u=>({url:u,pv:u}));return files.map((f,i)=>({url:`이미지${i+1}_URL`,pv:f.du}))}
 
+// ─── URL 이미지 크기 자동 감지 ───
+function detectImgSize(url){return new Promise(res=>{if(!url||!url.startsWith('http'))return res(null);const im=new Image();im.onload=()=>res({w:im.naturalWidth,h:im.naturalHeight});im.onerror=()=>{const im2=new Image();im2.crossOrigin='anonymous';im2.onload=()=>res({w:im2.naturalWidth,h:im2.naturalHeight});im2.onerror=()=>res(null);im2.src=url};im.src=url})}
+async function autoDetectFromURL(){
+const urls=eu(V('txt-input'));
+if(!urls.length||!urls[0].startsWith('http'))return;
+const sz=await detectImgSize(urls[0]);
+if(sz){bnw=sz.w;bnh=sz.h;const curW=parseInt(V('opt-w'))||280;$('opt-h').value=Math.round(curW*(sz.h/sz.w));$('ratio-ctrl').style.display='block';$('ratio-sl').value=100;$('ratio-val').textContent='100%';const g=gcd(bnw,bnh);$('ratio-hint').innerHTML=`📐 ${bnw}×${bnh} (${bnw/g}:${bnh/g})`;$('ratio-hint').classList.add('sh')}}
+let urlSizeTimer=null;
+
 // ─── File upload ───
 const dz=$('dropzone'),fi=$('file-input');
 dz.ondragover=e=>{e.preventDefault();dz.classList.add('ov')};dz.ondragleave=()=>dz.classList.remove('ov');
@@ -179,8 +192,8 @@ window.rmF=rmF; // expose for onclick
 function rndTh(){const el=$('thl');el.innerHTML='';files.forEach((f,i)=>{const d=document.createElement('div');d.className='thi';d.innerHTML=`<img src="${f.du}"><button class="thrm" onclick="rmF(${i})">✕</button><div class="tho">${i+1}</div>`;el.appendChild(d)})}
 function autoR(){const bw=parseInt(V('opt-w'))||280;$('opt-h').value=Math.round(bw*(bnh/bnw));$('ratio-ctrl').style.display='block';$('ratio-sl').value=100;$('ratio-val').textContent='100%';const g=gcd(bnw,bnh);$('ratio-hint').innerHTML=`📐 ${bnw}×${bnh} (${bnw/g}:${bnh/g})`;$('ratio-hint').classList.add('sh')}
 $('ratio-sl').oninput=function(){$('ratio-val').textContent=this.value+'%';if(!bnw)return;$('opt-h').value=Math.round((parseInt(V('opt-w'))||280)*(bnh/bnw)*(this.value/100))};
-$('opt-w').oninput=function(){if(!bnw||curTab!=='upload')return;const p=parseInt(V('ratio-sl'))||100;$('opt-h').value=Math.round(+this.value*(bnh/bnw)*(p/100))};
-$('txt-input').oninput=()=>{if(fxM()==='each')buildEach()};
+$('opt-w').oninput=function(){if(!bnw)return;const p=parseInt(V('ratio-sl'))||100;$('opt-h').value=Math.round(+this.value*(bnh/bnw)*(p/100))};
+$('txt-input').oninput=()=>{if(fxM()==='each')buildEach();clearTimeout(urlSizeTimer);urlSizeTimer=setTimeout(autoDetectFromURL,600)};
 
 // ─── Toggle helper ───
 function togCI(ci){const cb=ci.querySelector('input');cb.checked=!cb.checked;ci.classList.toggle('on',cb.checked)}
@@ -195,14 +208,24 @@ function readFL(slEl){if(!slEl)return'';const p=[];slEl.querySelectorAll('.fr').
 const hovTog=$('hov-tog'),hovPan=$('hov-pan');
 hovTog.onclick=()=>{togCI(hovTog);hovPan.style.display=hovTog.classList.contains('on')?'':'none'};
 
-// ─── Anim grid (common) ───
+// ─── Anim grid (common) — 기본 + 호버 분리 ───
 const animGrid=$('anim-grid');
+const animHovGrid=$('anim-hov-grid');
 ANIMS.forEach(a=>{const ci=document.createElement('label');ci.className='ci';ci.dataset.anim=a.k;ci.innerHTML=`<input type="checkbox"><div class="cdot"></div>${a.e} ${a.l}`;ci.onclick=()=>{togCI(ci);buildAnimSub()};animGrid.appendChild(ci)});
+ANIMS.forEach(a=>{const ci=document.createElement('label');ci.className='ci';ci.dataset.anim=a.k;ci.innerHTML=`<input type="checkbox"><div class="cdot"></div>${a.e} ${a.l}`;ci.onclick=()=>{togCI(ci);buildAnimHovSub()};animHovGrid.appendChild(ci)});
 function getSelAnims(){return[...animGrid.querySelectorAll('.ci.on')].map(c=>c.dataset.anim)}
-function buildAnimSub(){const sub=$('anim-sub'),cont=$('anim-sub-c');cont.innerHTML='';const sels=getSelAnims();if(!sels.length){sub.style.display='none';return}sub.style.display='block';sels.forEach(ak=>{const info=ANIMS.find(a=>a.k===ak);const t=document.createElement('div');t.style.cssText='font-size:.72rem;color:var(--gld);margin:6px 0 4px;font-weight:600';t.textContent=`${info.e} ${info.l}`;cont.appendChild(t);
-const hr=document.createElement('div');hr.className='fr';hr.innerHTML=`<span class="fn">호버시만</span><select id="${ak}-hov" class="mini-select" style="width:auto;flex:1"><option value="0">아니오</option><option value="1">예</option></select>`;cont.appendChild(hr);
-(AF[ak]||[]).forEach(f=>{const row=document.createElement('div');row.className='fr';if(f.type==='col')row.innerHTML=`<span class="fn">${f.l}</span><input type="color" id="${f.id}" value="${f.d||'#5e7e4f'}">`;else if(f.type==='sel')row.innerHTML=`<span class="fn">${f.l}</span><select id="${f.id}" class="mini-select" style="width:auto;flex:1">${f.opts.map((o,j)=>`<option value="${j}">${o}</option>`).join('')}</select>`;else{row.innerHTML=`<span class="fn">${f.l}</span><input type="range" id="${f.id}" min="${f.mn}" max="${f.mx}" value="${f.d}" step="${f.s||1}"><span class="fv">${f.d}</span>`;row.querySelector('input[type=range]').oninput=function(){this.nextElementSibling.textContent=this.value}}cont.appendChild(row)})})}
-
+function getSelHovAnims(){return[...animHovGrid.querySelectorAll('.ci.on')].map(c=>c.dataset.anim)}
+function buildAnimSubGeneric(gridSels,subId,contId,idPrefix){
+const sub=$(subId),cont=$(contId);cont.innerHTML='';
+if(!gridSels.length){sub.style.display='none';return}sub.style.display='block';
+gridSels.forEach(ak=>{const info=ANIMS.find(a=>a.k===ak);const t=document.createElement('div');t.style.cssText='font-size:.72rem;color:var(--gld);margin:6px 0 4px;font-weight:600';t.textContent=`${info.e} ${info.l}`;cont.appendChild(t);
+(AF[ak]||[]).forEach(f=>{const row=document.createElement('div');row.className='fr';const uid=idPrefix+f.id;
+if(f.type==='col')row.innerHTML=`<span class="fn">${f.l}</span><input type="color" id="${uid}" value="${f.d||'#5e7e4f'}">`;
+else if(f.type==='sel')row.innerHTML=`<span class="fn">${f.l}</span><select id="${uid}" class="mini-select" style="width:auto;flex:1">${f.opts.map((o,j)=>`<option value="${j}">${o}</option>`).join('')}</select>`;
+else{row.innerHTML=`<span class="fn">${f.l}</span><input type="range" id="${uid}" min="${f.mn}" max="${f.mx}" value="${f.d}" step="${f.s||1}"><span class="fv">${f.d}</span>`;row.querySelector('input[type=range]').oninput=function(){this.nextElementSibling.textContent=this.value}}
+cont.appendChild(row)})})}
+function buildAnimSub(){buildAnimSubGeneric(getSelAnims(),'anim-sub','anim-sub-c','')}
+function buildAnimHovSub(){buildAnimSubGeneric(getSelHovAnims(),'anim-hov-sub','anim-hov-sub-c','h-')}
 // ─── Special fx ───
 ['sp-vig','sp-gli','sp-flip','sp-autofx'].forEach(id=>{$(id).onclick=()=>{togCI($(id));buildSpe()}});
 function buildSpe(){const sl=$('sp-sl');sl.innerHTML='';let any=false;
@@ -311,9 +334,10 @@ sub.appendChild(row)});
 //  ANIM CSS HELPERS
 // ════════════════════════════
 function animStr(a){const m={floating:`floating ${V('af-s',3)}s ease-in-out infinite`,heartbeat:`heartbeat ${V('ah-s',1)}s ease-in-out infinite`,glow:`glow ${V('ag-s',2)}s ease-in-out infinite`,swing:`swing ${V('asw-s',2)}s ease-in-out infinite`,bounce:`bounce ${V('ab-s',1)}s cubic-bezier(.36,0,.66,1) infinite`,glitchanim:`anim-glitch ${V('agl-s',.3)}s steps(5,end) infinite`,shake:`shake ${V('as-s',.5)}s ease-in-out infinite`,spin:`spin ${V('asp-s',.6)}s linear infinite`};return m[a]||''}
+function animHovStr(a){const m={floating:`floating ${V('h-af-s',3)}s ease-in-out infinite`,heartbeat:`heartbeat ${V('h-ah-s',1)}s ease-in-out infinite`,glow:`glow ${V('h-ag-s',2)}s ease-in-out infinite`,swing:`swing ${V('h-asw-s',2)}s ease-in-out infinite`,bounce:`bounce ${V('h-ab-s',1)}s cubic-bezier(.36,0,.66,1) infinite`,glitchanim:`anim-glitch ${V('h-agl-s',.3)}s steps(5,end) infinite`,shake:`shake ${V('h-as-s',.5)}s ease-in-out infinite`,spin:`spin ${V('h-asp-s',.6)}s linear infinite`};return m[a]||''}
 function eAnimStr(a,idx){const m={floating:`floating ${V('eaf-s-'+idx,3)}s ease-in-out infinite`,heartbeat:`heartbeat ${V('eah-s-'+idx,1)}s ease-in-out infinite`,glow:`glow ${V('eag-s-'+idx,2)}s ease-in-out infinite`,swing:`swing ${V('easw-s-'+idx,2)}s ease-in-out infinite`,bounce:`bounce ${V('eab-s-'+idx,1)}s cubic-bezier(.36,0,.66,1) infinite`,glitchanim:`anim-glitch ${V('eagl-s-'+idx,.3)}s steps(5,end) infinite`,shake:`shake ${V('eas-s-'+idx,.5)}s ease-in-out infinite`,spin:`spin ${V('easp-s-'+idx,.6)}s linear infinite`};return m[a]||''}
-function animBaseCSS(anims){const p=[];anims.forEach(a=>{if(V(a+'-hov','0')==='1')return;const s=animStr(a);if(s)p.push(s)});return p.length?`animation:${p.join(',')}`:''}
-function animHovCSS(anims){const p=[];anims.forEach(a=>{if(V(a+'-hov','0')!=='1')return;const s=animStr(a);if(s){/* infinite → 1 for hover-only */p.push(s.replace(' infinite',''))}});return p.length?`animation:${p.join(',')}`:''}
+function animBaseCSS(anims){const p=[];anims.forEach(a=>{const s=animStr(a);if(s)p.push(s)});return p.length?`animation:${p.join(',')}`:''}
+function animHovCSS(hovAnims){const p=[];hovAnims.forEach(a=>{const s=animHovStr(a);if(s)p.push(s)});return p.length?`animation:${p.join(',')}`:''}
 function eAnimBaseCSS(anims,idx){const p=[];anims.forEach(a=>{if(V('e'+a+'hov-'+idx,'0')==='1')return;const s=eAnimStr(a,idx);if(s)p.push(s)});return p.length?`animation:${p.join(',')}`:''}
 function eAnimHovCSS(anims,idx){const p=[];anims.forEach(a=>{if(V('e'+a+'hov-'+idx,'0')!=='1')return;const s=eAnimStr(a,idx);if(s){p.push(s.replace(' infinite',''))}});return p.length?`animation:${p.join(',')}`:''}
 
@@ -335,18 +359,21 @@ return''}
 $('gen-btn').onclick=function(){
 const imgs=getImgs();if(!imgs.length)return alert('이미지를 넣어주세요.');
 const w=V('opt-w'),h=V('opt-h'),rad=V('opt-rad'),gap=V('opt-gap');
+const CN=V('opt-classname','fx');
 const mode=fxM();const doVig=isOn('sp-vig'),doGli=isOn('sp-gli'),doFlip=isOn('sp-flip'),doAutoFx=isOn('sp-autofx');
 
+function imp(s){return s.split(';').map(p=>p.trim()).filter(Boolean).map(p=>p.endsWith('!important')?p:p+' !important').join(';')}
+
 function build(urls){
-let css=`.fx-gallery{display:flex;flex-wrap:wrap;gap:${gap}px;justify-content:center;padding:40px 20px;overflow:visible}\n`;
+let css=`.${CN}-gallery{display:flex;flex-wrap:wrap;gap:${gap}px;justify-content:center;padding:40px 20px;overflow:visible}\n`;
 
 if(doFlip&&mode!=='each'){const fc=V('tf-c','#2c3e2d'),fb=V('tf-b','#c2a878'),fs=V('tf-s','0.6');
-css+=`.fx-flip-card{width:${w}px;height:${h}px;perspective:1000px;cursor:pointer}\n.fx-flip-inner{position:relative;width:100%;height:100%;transition:transform ${fs}s ease-in-out;transform-style:preserve-3d}\n.fx-flip-card:hover .fx-flip-inner{transform:rotateY(180deg)}\n.fx-flip-front,.fx-flip-back{position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:${rad}px;overflow:hidden;box-shadow:0 4px 8px rgba(0,0,0,.3)}\n.fx-flip-front{background:${fc};display:flex;align-items:center;justify-content:center}\n.fx-flip-front::before{content:'';position:absolute;inset:10px;border:2px solid ${hexA(fb,.45)};border-radius:${Math.max(0,rad-4)}px}\n.fx-flip-front::after{content:'\\2726';font-size:2.5rem;color:${hexA(fb,.65)}}\n.fx-flip-back{transform:rotateY(180deg)}\n.fx-flip-back img{width:100%;height:100%;object-fit:cover;display:block}\n`;
-return`<style>\n${css}</style>\n\n<div class="fx-gallery">\n${urls.map((u,i)=>`    <div class="fx-flip-card"><div class="fx-flip-inner"><div class="fx-flip-front"></div><div class="fx-flip-back"><img src="${u}" alt="사진${i+1}" style="opacity:1;outline:none;"></div></div></div>`).join('\n')}\n</div>`}
+css+=`.${CN}-flip-card{width:${w}px;height:${h}px;perspective:1000px;cursor:pointer}\n.${CN}-flip-inner{position:relative;width:100%;height:100%;transition:transform ${fs}s ease-in-out !important;transform-style:preserve-3d}\n.${CN}-flip-card:hover .${CN}-flip-inner{transform:rotateY(180deg) !important}\n.${CN}-flip-front,.${CN}-flip-back{position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:${rad}px;overflow:hidden;box-shadow:0 4px 8px rgba(0,0,0,.3)}\n.${CN}-flip-front{background:${fc};display:flex;align-items:center;justify-content:center}\n.${CN}-flip-front::before{content:'';position:absolute;inset:10px;border:2px solid ${hexA(fb,.45)};border-radius:${Math.max(0,rad-4)}px}\n.${CN}-flip-front::after{content:'\\2726';font-size:2.5rem;color:${hexA(fb,.65)}}\n.${CN}-flip-back{transform:rotateY(180deg)}\n.${CN}-flip-back img{width:100%;height:100%;object-fit:cover;display:block}\n`;
+return`<style>\n${css}</style>\n\n<div class="${CN}-gallery">\n${urls.map((u,i)=>`    <div class="${CN}-flip-card"><div class="${CN}-flip-inner"><div class="${CN}-flip-front"></div><div class="${CN}-flip-back"><img src="${u}" alt="사진${i+1}" style="opacity:1;outline:none;"></div></div></div>`).join('\n')}\n</div>`}
 
 if(mode==='each'){
 const usedA=new Set();
-css+=`.fx-item{width:${w}px;height:${h}px;border-radius:${rad}px;overflow:visible;position:relative}\n.fx-item img{width:100%;height:100%;object-fit:cover;display:block;box-shadow:0 4px 8px rgba(0,0,0,.3);cursor:pointer;border-radius:${rad}px}\n`;
+css+=`.${CN}-item{width:${w}px;height:${h}px;border-radius:${rad}px;overflow:visible;position:relative}\n.${CN}-item img{width:100%;height:100%;object-fit:cover;display:block;box-shadow:0 4px 8px rgba(0,0,0,.3);cursor:pointer;border-radius:${rad}px}\n`;
 const cards=document.querySelectorAll('#each-panel .img-card');
 urls.forEach((_,i)=>{
 const card=cards[i];if(!card)return;const n=i+1;
@@ -358,27 +385,28 @@ const trIn=V('etrin-'+i,'.4'),trOut=V('etrout-'+i,'.4'),scale=V('escale-'+i,'1.0
 const anims=[...card.querySelectorAll('.eanim-cg .ci.on')].map(c=>c.dataset.anim);
 anims.forEach(a=>usedA.add(a));
 let base=[];
-if(baseF)base.push(`filter:${baseF}`);
-if(hovOn){const tr=['transform','filter','box-shadow'].map(x=>x+' '+trOut+'s ease-in-out').join(',');base.push(`transition:${tr}`)}
-const ab=eAnimBaseCSS(anims,i);if(ab)base.push(ab);
-if(base.length)css+=`.fx-item:nth-child(${n}) img{${base.join(';')}}\n`;
-if(hovOn){let hov=[];const tr=['transform','filter','box-shadow'].map(x=>x+' '+trIn+'s ease-in-out').join(',');hov.push(`transition:${tr}`);const tf=[];if(scale!=='1'&&scale!=='1.00')tf.push(`scale(${scale})`);if(tilt!=='0')tf.push(`rotate(${tilt}deg)`);if(tf.length)hov.push(`transform:${tf.join(' ')}`);if(hovF)hov.push(`filter:${hovF}`);else if(baseF)hov.push(`filter:none`);hov.push('box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:10');const ah=eAnimHovCSS(anims,i);if(ah)hov.push(ah);css+=`.fx-item:nth-child(${n}) img:hover{${hov.join(';')}}\n`}
+if(baseF)base.push(`filter:${baseF} !important`);
+if(hovOn){const tr=['transform','filter','box-shadow'].map(x=>x+' '+trOut+'s ease-in-out').join(',');base.push(`transition:${tr} !important`)}
+const ab=eAnimBaseCSS(anims,i);if(ab)base.push(ab+' !important');
+if(base.length)css+=`.${CN}-item:nth-child(${n}) img{${base.join(';')}}\n`;
+if(hovOn){let hov=[];const tr=['transform','filter','box-shadow'].map(x=>x+' '+trIn+'s ease-in-out').join(',');hov.push(`transition:${tr} !important`);const tf=[];if(scale!=='1'&&scale!=='1.00')tf.push(`scale(${scale})`);if(tilt!=='0')tf.push(`rotate(${tilt}deg)`);if(tf.length)hov.push(`transform:${tf.join(' ')} !important`);if(hovF)hov.push(`filter:${hovF} !important`);else if(baseF)hov.push(`filter:none !important`);hov.push('box-shadow:0 8px 20px rgba(0,0,0,.4) !important;z-index:10 !important');const ah=eAnimHovCSS(anims,i);if(ah)hov.push(ah+' !important');css+=`.${CN}-item:nth-child(${n}) img:hover{${hov.join(';')}}\n`}
 });
-usedA.forEach(a=>{const k=kf(a,'e');if(k)css+=k+'\n'});// uses default values for keyframes
+usedA.forEach(a=>{const k=kf(a,'e');if(k)css+=k+'\n'});
 }else{
 const useH=hovTog.classList.contains('on');
 const trIn=V('opt-trin','.4'),trOut=V('opt-trout','.4'),scale=V('opt-scale','1.05'),tilt=V('opt-tilt','0');
 const baseF=readFL($('fb-sl')),hovF=readFL($('fh-sl'));
 const anims=getSelAnims();
-css+=`.fx-item{width:${w}px;height:${h}px;border-radius:${rad}px;overflow:${doVig?'hidden':'visible'};position:relative}\n`;
+const hovAnims=getSelHovAnims();
+css+=`.${CN}-item{width:${w}px;height:${h}px;border-radius:${rad}px;overflow:${doVig?'hidden':'visible'};position:relative}\n`;
 let ic=`width:100%;height:100%;object-fit:cover;display:block;box-shadow:0 4px 8px rgba(0,0,0,.3);cursor:pointer;border-radius:${rad}px`;
-if(baseF)ic+=`;filter:${baseF}`;
-if(useH){const tr=['transform','filter','box-shadow'].map(p=>p+' '+trOut+'s ease-in-out').join(',');ic+=`;transition:${tr}`}
-const ab=animBaseCSS(anims);if(ab)ic+=`;${ab}`;
-css+=`.fx-item img{${ic}}\n`;
-if(useH){let hov=[];const tr=['transform','filter','box-shadow'].map(p=>p+' '+trIn+'s ease-in-out').join(',');hov.push(`transition:${tr}`);const tf=[];if(scale!=='1'&&scale!=='1.00')tf.push(`scale(${scale})`);if(tilt!=='0')tf.push(`rotate(${tilt}deg)`);if(tf.length)hov.push(`transform:${tf.join(' ')}`);if(hovF)hov.push(`filter:${hovF}`);else if(baseF)hov.push(`filter:none`);hov.push('box-shadow:0 8px 20px rgba(0,0,0,.4);z-index:10');const ah=animHovCSS(anims);if(ah)hov.push(ah);css+=`.fx-item img:hover{${hov.join(';')}}\n`}
-if(mode==='wave'){const wd=V('wave-delay','0.3');for(let i=0;i<urls.length;i++)css+=`.fx-item:nth-child(${i+1}) img{animation-delay:${(i*parseFloat(wd)).toFixed(1)}s}\n`}
-if(doVig)css+=`.fx-item::after{content:'';position:absolute;inset:0;border-radius:${rad}px;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,${V('vig-s',40)/100}) 100%);pointer-events:none}\n`;
+if(baseF)ic+=`;filter:${baseF} !important`;
+if(useH){const tr=['transform','filter','box-shadow'].map(p=>p+' '+trOut+'s ease-in-out').join(',');ic+=`;transition:${tr} !important`}
+const ab=animBaseCSS(anims);if(ab)ic+=`;${ab} !important`;
+css+=`.${CN}-item img{${ic}}\n`;
+if(useH){let hov=[];const tr=['transform','filter','box-shadow'].map(p=>p+' '+trIn+'s ease-in-out').join(',');hov.push(`transition:${tr} !important`);const tf=[];if(scale!=='1'&&scale!=='1.00')tf.push(`scale(${scale})`);if(tilt!=='0')tf.push(`rotate(${tilt}deg)`);if(tf.length)hov.push(`transform:${tf.join(' ')} !important`);if(hovF)hov.push(`filter:${hovF} !important`);else if(baseF)hov.push(`filter:none !important`);hov.push('box-shadow:0 8px 20px rgba(0,0,0,.4) !important;z-index:10 !important');const ah=animHovCSS(hovAnims);if(ah)hov.push(ah+' !important');css+=`.${CN}-item img:hover{${hov.join(';')}}\n`}
+if(mode==='wave'){const wd=V('wave-delay','0.3');for(let i=0;i<urls.length;i++)css+=`.${CN}-item:nth-child(${i+1}) img{animation-delay:${(i*parseFloat(wd)).toFixed(1)}s !important}\n`}
+if(doVig)css+=`.${CN}-item::after{content:'';position:absolute;inset:0;border-radius:${rad}px;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,${V('vig-s',40)/100}) 100%);pointer-events:none}\n`;
 if(doGli){const gs=V('gli-s',5);css+=`@keyframes glitch-fx{0%,100%{clip-path:inset(0);transform:translate(0)}20%{clip-path:inset(${gs*3}% 0 ${gs*5}% 0);transform:translate(-${gs}px,${gs}px)}40%{clip-path:inset(${gs*6}% 0 ${gs}% 0);transform:translate(${gs}px,-${gs}px)}60%{clip-path:inset(${gs*2}% 0 ${gs*4}% 0);transform:translate(${gs}px)}80%{clip-path:inset(${gs*5}% 0 ${gs*2}% 0);transform:translate(-${gs}px)}}\n`}
 // 자동 필터 전환
 if(doAutoFx){
@@ -389,13 +417,14 @@ const repeat=V('afx-repeat','infinite');
 const startFilter=startFx==='blur'?`blur(${startV}px)`:`${startFx}(${startV}%)`;
 const endFilter=endFx==='none'?'none':endFx==='blur'?`blur(${endV}px)`:`${endFx}(${endV}%)`;
 const iterDir=repeat==='alternate'?'infinite;animation-direction:alternate':repeat;
-css+=`@keyframes auto-filter-transition {\n    0% { filter: ${startFilter}; }\n    100% { filter: ${endFilter}; }\n}\n`;
-css+=`.fx-item img {\n    animation: auto-filter-transition ${dur}s ease-in-out ${delay}s ${iterDir} both;\n}\n`;
+css+=`@keyframes ${CN}-auto-filter {\n    0% { filter: ${startFilter}; }\n    100% { filter: ${endFilter}; }\n}\n`;
+css+=`.${CN}-item img {\n    animation: ${CN}-auto-filter ${dur}s ease-in-out ${delay}s ${iterDir} both !important;\n}\n`;
 }
 anims.forEach(a=>{const k=kf(a);if(k)css+=k+'\n'});
+hovAnims.forEach(a=>{const k=kf(a,'h-');if(k&&!anims.includes(a))css+=k+'\n'});
 }
-const html=urls.map((u,i)=>`    <div class="fx-item"><img src="${u}" alt="사진${i+1}" style="opacity:1;outline:none;"></div>`).join('\n');
-return`<style>\n${css}</style>\n\n<div class="fx-gallery">\n${html}\n</div>`}
+const html=urls.map((u,i)=>`    <div class="${CN}-item"><img src="${u}" alt="사진${i+1}" style="opacity:1;outline:none;"></div>`).join('\n');
+return`<style>\n${css}</style>\n\n<div class="${CN}-gallery">\n${html}\n</div>`}
 
 const code=build(imgs.map(i=>i.url)),pc=build(imgs.map(i=>i.pv));
 $('code-out').textContent=code;show('result');$('pv-frame').innerHTML=pc;show('pv-sec');
@@ -409,7 +438,7 @@ function getPresets(){try{return JSON.parse(localStorage.getItem('glkku-presets'
 function saveToLS(list){try{localStorage.setItem('glkku-presets',JSON.stringify(list));return true}catch(e){alert('⚠️ 프리셋 저장 실패: 이 환경에서는 localStorage가 지원되지 않습니다.\nGitHub Pages에 올려서 사용해주세요.\n\nJSON 내보내기로 파일 저장은 가능합니다.');return false}}
 
 function collectSettings(){
-const s={w:V('opt-w'),h:V('opt-h'),rad:V('opt-rad'),gap:V('opt-gap'),mode:fxM()};
+const s={w:V('opt-w'),h:V('opt-h'),rad:V('opt-rad'),gap:V('opt-gap'),classname:V('opt-classname','fx'),mode:fxM()};
 s.baseFx=[];document.querySelectorAll('#fb-grid .ci.on').forEach(ci=>s.baseFx.push(ci.dataset.fx));
 s.baseSliders={};document.querySelectorAll('#fb-sl .fr').forEach(row=>{const sl=row.querySelector('[data-fx]');if(sl)s.baseSliders[sl.dataset.fx]={v:sl.value,color:row.querySelector('[data-role=color]')?.value||'',alpha:row.querySelector('[data-role=alpha]')?.value||''}});
 s.hovOn=hovTog.classList.contains('on');
@@ -417,14 +446,16 @@ s.hovFx=[];document.querySelectorAll('#fh-grid .ci.on').forEach(ci=>s.hovFx.push
 s.hovSliders={};document.querySelectorAll('#fh-sl .fr').forEach(row=>{const sl=row.querySelector('[data-fx]');if(sl)s.hovSliders[sl.dataset.fx]={v:sl.value,color:row.querySelector('[data-role=color]')?.value||'',alpha:row.querySelector('[data-role=alpha]')?.value||''}});
 s.trIn=V('opt-trin');s.trOut=V('opt-trout');s.scale=V('opt-scale');s.tilt=V('opt-tilt');
 s.anims=getSelAnims();
-s.animSettings={};s.anims.forEach(a=>{s.animSettings[a]={hov:V(a+'-hov','0')};(AF[a]||[]).forEach(f=>{s.animSettings[a][f.id]=V(f.id,f.d!=null?String(f.d):'0')})});
+s.animSettings={};s.anims.forEach(a=>{s.animSettings[a]={};(AF[a]||[]).forEach(f=>{s.animSettings[a][f.id]=V(f.id,f.d!=null?String(f.d):'0')})});
+s.hovAnims=getSelHovAnims();
+s.hovAnimSettings={};s.hovAnims.forEach(a=>{s.hovAnimSettings[a]={};(AF[a]||[]).forEach(f=>{s.hovAnimSettings[a]['h-'+f.id]=V('h-'+f.id,f.d!=null?String(f.d):'0')})});
 s.waveDelay=V('wave-delay');
 s.vig=isOn('sp-vig');s.vigS=V('vig-s','40');s.gli=isOn('sp-gli');s.gliS=V('gli-s','5');s.gliC=V('gli-c','#ff0000');
 s.flip=isOn('sp-flip');s.tfC=V('tf-c','#2c3e2d');s.tfB=V('tf-b','#c2a878');s.tfS=V('tf-s','0.6');
 return s}
 
 function applySettings(s){
-if(s.w)$('opt-w').value=s.w;if(s.h)$('opt-h').value=s.h;if(s.rad)$('opt-rad').value=s.rad;if(s.gap)$('opt-gap').value=s.gap;
+if(s.w)$('opt-w').value=s.w;if(s.h)$('opt-h').value=s.h;if(s.rad)$('opt-rad').value=s.rad;if(s.gap)$('opt-gap').value=s.gap;if(s.classname)$('opt-classname').value=s.classname;
 if(s.mode){$('fx-mode').value=s.mode;$('fx-mode').dispatchEvent(new Event('change'))}
 document.querySelectorAll('#fb-grid .ci').forEach(ci=>{const on=(s.baseFx||[]).includes(ci.dataset.fx);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)});rebuildSL('fb-grid');
 if(s.baseSliders)applySlidersTo('#fb-sl',s.baseSliders);
@@ -434,7 +465,9 @@ if(s.hovSliders)applySlidersTo('#fh-sl',s.hovSliders);
 if(s.trIn)$('opt-trin').value=s.trIn;if(s.trOut)$('opt-trout').value=s.trOut;
 if(s.scale)$('opt-scale').value=s.scale;if(s.tilt)$('opt-tilt').value=s.tilt;
 animGrid.querySelectorAll('.ci').forEach(ci=>{const on=(s.anims||[]).includes(ci.dataset.anim);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)});buildAnimSub();
-if(s.animSettings){setTimeout(()=>{Object.entries(s.animSettings).forEach(([ak,d])=>{const hovEl=$(ak+'-hov');if(hovEl)hovEl.value=d.hov||'0';Object.entries(d).forEach(([fid,val])=>{if(fid==='hov')return;const el=$(fid);if(el)el.value=val})})},50)}
+animHovGrid.querySelectorAll('.ci').forEach(ci=>{const on=(s.hovAnims||[]).includes(ci.dataset.anim);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)});buildAnimHovSub();
+if(s.animSettings){setTimeout(()=>{Object.entries(s.animSettings).forEach(([ak,d])=>{Object.entries(d).forEach(([fid,val])=>{const el=$(fid);if(el)el.value=val})})},50)}
+if(s.hovAnimSettings){setTimeout(()=>{Object.entries(s.hovAnimSettings).forEach(([ak,d])=>{Object.entries(d).forEach(([fid,val])=>{const el=$(fid);if(el)el.value=val})})},50)}
 if(s.waveDelay){const el=$('wave-delay');if(el){el.value=s.waveDelay;el.nextElementSibling.textContent=s.waveDelay+'s'}}
 function setTog(id,on){const ci=$(id);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)}
 setTog('sp-vig',!!s.vig);setTog('sp-gli',!!s.gli);setTog('sp-flip',!!s.flip);buildSpe();
