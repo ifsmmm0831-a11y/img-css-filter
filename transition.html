@@ -52,7 +52,6 @@ textarea{width:100%;min-height:60px;background:var(--sf2);border:1px solid var(-
 <body>
 <div class="hdr">
 <h1><em>반전</em> 이미지 생성기</h1>
-<p>이미지 + 효과 조합 → 순수 CSS/HTML 코드</p>
 </div>
 <div class="wrap">
 <div style="display:flex;gap:0;margin-bottom:24px;border-radius:var(--r);overflow:hidden;border:1px solid var(--bd)">
@@ -85,6 +84,7 @@ textarea{width:100%;min-height:60px;background:var(--sf2);border:1px solid var(-
 <div class="og"><label>가로(px)</label><input type="number" id="opt-w" value="280" min="50"></div>
 <div class="og"><label>세로(px)</label><input type="number" id="opt-h" value="180" min="50"></div>
 <div class="og"><label>둥글기(px)</label><input type="number" id="opt-rad" value="8" min="0"></div>
+<div class="og"><label>클래스 접두사</label><input type="text" id="opt-classname" value="tr" placeholder="tr" style="font-family:'JetBrains Mono',monospace"></div>
 </div>
 <div class="ssep"><div class="stitle">전환 트리거</div></div>
 <div class="opts">
@@ -218,6 +218,17 @@ if($(pfx+'-paste-btn').classList.contains('on')){const urls=eu(V(pfx+'-text','')
 if(forCode)return`이미지${pfx==='a'?'A':'B'}_URL`;
 return pfx==='a'?aDU:bDU}
 
+// ─── URL 이미지 크기 자동 감지 ───
+function detectImgSize(url){return new Promise(res=>{if(!url||!url.startsWith('http'))return res(null);const im=new Image();im.onload=()=>res({w:im.naturalWidth,h:im.naturalHeight});im.onerror=()=>{const im2=new Image();im2.crossOrigin='anonymous';im2.onload=()=>res({w:im2.naturalWidth,h:im2.naturalHeight});im2.onerror=()=>res(null);im2.src=url};im.src=url})}
+async function autoDetectSize(){
+const urlA=getImg('a',false);
+if(!urlA||!urlA.startsWith('http'))return;
+const sz=await detectImgSize(urlA);
+if(sz){const curW=parseInt(V('opt-w'))||280;$('opt-w').value=curW;$('opt-h').value=Math.round(curW*(sz.h/sz.w))}}
+// URL 입력 변경 시 크기 감지
+let sizeTimer=null;
+['a-text','b-text'].forEach(id=>{$(id).addEventListener('input',()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(autoDetectSize,600)})});
+
 // ─── UI ───
 $('opt-trigger').onchange=function(){$('auto-opts').style.display=this.value==='auto'?'':'none'};
 ['fx-fade','fx-zoom','fx-blur','fx-flip'].forEach(id=>$(id).onclick=()=>togCI($(id)));
@@ -241,63 +252,71 @@ const animAstr=animsA.map(a=>animCSSStr(a,'a-')).filter(Boolean).join(',');
 const animBstr=animsB.map(a=>animCSSStr(a,'b-')).filter(Boolean).join(',');
 
 if(doFlip){
-css+=`.tr-card{width:${w}px;height:${h}px;perspective:1000px;cursor:pointer}\n`;
-css+=`.tr-inner{position:relative;width:100%;height:100%;transition:transform ${speedOut}s ease-in-out;transform-style:preserve-3d}\n`;
+const CN=V('opt-classname','tr');
+css+=`.${CN}-card{width:${w}px;height:${h}px;perspective:1000px;cursor:pointer}\n`;
+css+=`.${CN}-inner{position:relative;width:100%;height:100%;transition:transform ${speedOut}s ease-in-out !important;transform-style:preserve-3d}\n`;
 if(trigger==='hover'){
-css+=`.tr-card:hover .tr-inner{transform:rotateY(180deg);transition:transform ${speedIn}s ease-in-out}\n`}
+css+=`.${CN}-card:hover .${CN}-inner{transform:rotateY(180deg) !important;transition:transform ${speedIn}s ease-in-out !important}\n`}
 else{const td=parseFloat(delay)*2+parseFloat(speedIn)*2;const p1=Math.round(parseFloat(delay)/td*100);const p2=Math.round((parseFloat(delay)+parseFloat(speedIn))/td*100);const p3=Math.round((parseFloat(delay)*2+parseFloat(speedIn))/td*100);
-css+=`@keyframes tr-flip{0%,${p1}%{transform:rotateY(0)}${p2}%,${p3}%{transform:rotateY(180deg)}100%{transform:rotateY(0)}}\n.tr-inner{animation:tr-flip ${td}s ease-in-out ${repeat==='1'?'1 forwards':'infinite'}}\n`}
-css+=`.tr-front,.tr-back{position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:${rad}px;overflow:hidden}\n`;
-css+=`.tr-back{transform:rotateY(180deg)}\n`;
+css+=`@keyframes ${CN}-flip{0%,${p1}%{transform:rotateY(0)}${p2}%,${p3}%{transform:rotateY(180deg)}100%{transform:rotateY(0)}}\n.${CN}-inner{animation:${CN}-flip ${td}s ease-in-out ${repeat==='1'?'1 forwards':'infinite'} !important}\n`}
+css+=`.${CN}-front,.${CN}-back{position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:${rad}px;overflow:hidden}\n`;
+css+=`.${CN}-back{transform:rotateY(180deg)}\n`;
 let imgAcss=`width:100%;height:100%;object-fit:cover;display:block`;
-if(fA)imgAcss+=`;filter:${fA}`;if(animAstr)imgAcss+=`;animation:${animAstr}`;
-css+=`.tr-front img{${imgAcss}}\n`;
+if(fA)imgAcss+=`;filter:${fA} !important`;if(animAstr)imgAcss+=`;animation:${animAstr} !important`;
+css+=`.${CN}-front img{${imgAcss}}\n`;
 let imgBcss=`width:100%;height:100%;object-fit:cover;display:block`;
-if(fB)imgBcss+=`;filter:${fB}`;if(animBstr)imgBcss+=`;animation:${animBstr}`;
-css+=`.tr-back img{${imgBcss}}\n`;
+if(fB)imgBcss+=`;filter:${fB} !important`;if(animBstr)imgBcss+=`;animation:${animBstr} !important`;
+css+=`.${CN}-back img{${imgBcss}}\n`;
 allAnims.forEach(a=>{const k=animKF(a,animsA.includes(a)?'a-':'b-');if(k)css+=k+'\n'});
-return`<style>\n${css}</style>\n\n<div class="tr-card">\n    <div class="tr-inner">\n        <div class="tr-front"><img src="${urlA}" alt="A" style="opacity:1;outline:none;"></div>\n        <div class="tr-back"><img src="${urlB}" alt="B" style="opacity:1;outline:none;"></div>\n    </div>\n</div>`}
+return`<style>\n${css}</style>\n\n<div class="${CN}-card">\n    <div class="${CN}-inner">\n        <div class="${CN}-front"><img src="${urlA}" alt="A" style="opacity:1;outline:none;"></div>\n        <div class="${CN}-back"><img src="${urlB}" alt="B" style="opacity:1;outline:none;"></div>\n    </div>\n</div>`}
 
-// 페이드/줌/블러
-css+=`.tr-wrap{position:relative;width:${w}px;border-radius:${rad}px;overflow:visible;cursor:pointer;margin:0 auto}\n`;
-css+=`.tr-wrap img{width:100%;height:auto;display:block;border-radius:${rad}px}\n`;
-css+=`.tr-b{position:absolute;top:0;left:0}\n`;
-
-// 기본 상태 — B→A 돌아오는 속도(speedOut)
-let aCSS=`transition:all ${speedOut}s ease-in-out`;
-if(fA)aCSS+=`;filter:${fA}`;
-if(animAstr)aCSS+=`;animation:${animAstr}`;
-css+=`.tr-a{${aCSS}}\n`;
-
-let bCSS=`opacity:0;transition:all ${speedOut}s ease-in-out`;
-if(fB)bCSS+=`;filter:${fB}`;
-if(doZoom)bCSS+=`;transform:scale(1.15)`;
-if(doBlur)bCSS+=`;filter:${fB?fB+' ':''}blur(10px)`;
-css+=`.tr-b{${bCSS}}\n`;
+// 페이드/줌/블러 — background-image 구조 (블로그 호환)
+const CN=V('opt-classname','tr');
 
 if(trigger==='hover'){
-// 호버 시 — A→B 나타나는 속도(speedIn)
-let aH=`transition:all ${speedIn}s ease-in-out`;
-if(doFade)aH+=';opacity:0';
-if(doZoom)aH+=';transform:scale(0.95)';
-css+=`.tr-wrap:hover .tr-a{${aH}}\n`;
-let bH=`transition:all ${speedIn}s ease-in-out;opacity:1`;
-if(doZoom)bH+=';transform:scale(1)';
-if(doBlur)bH+=`;filter:${fB||'none'}`;
-if(animBstr)bH+=`;animation:${animBstr}`;
-css+=`.tr-wrap:hover .tr-b{${bH}}\n`;
-}else{
+// ── 호버 모드: wrapper에 B이미지를 background로, img에 A이미지 ──
+css+=`.${CN}-wrap{position:relative;width:${w}px;margin:0 auto;border-radius:${rad}px;cursor:pointer;background-size:${doZoom?'110%':'cover'};background-position:center;background-repeat:no-repeat;overflow:hidden}\n`;
+css+=`.${CN}-wrap img{width:100%;height:auto;display:block;border-radius:${rad}px;transition:opacity ${speedOut}s ease-in-out !important`;
+if(fA)css+=`;filter:${fA} !important`;
+if(animAstr)css+=`;animation:${animAstr} !important`;
+css+=`}\n`;
+// 호버 시: img(A) 숨기고 background(B) 노출
+let hovCss=`opacity:0 !important;transition:opacity ${speedIn}s ease-in-out !important`;
+css+=`.${CN}-wrap:hover img{${hovCss}}\n`;
+// wrapper 호버 시 배경 애니메이션
+let wrapHov=[];
+if(doZoom)wrapHov.push('background-size:100%');
+if(doBlur)wrapHov.push(`filter:${fB||'none'}`);
+if(animBstr)wrapHov.push(`animation:${animBstr} !important`);
+if(fB&&!doBlur)wrapHov.push(`filter:${fB}`);
+if(wrapHov.length)css+=`.${CN}-wrap:hover{${wrapHov.join(';')}}\n`;
+allAnims.forEach(a=>{const k=animKF(a,animsA.includes(a)?'a-':'b-');if(k)css+=k+'\n'});
+return`<style>\n${css}</style>\n\n<div class="${CN}-wrap" style="background-image:url('${urlB}');">\n    <img src="${urlA}" alt="A" style="outline:none;">\n</div>`}
+
+// ── 자동 모드: 기존 2-img 구조 유지 (hover 불필요) ──
+css+=`.${CN}-wrap{position:relative;width:${w}px;border-radius:${rad}px;overflow:visible;cursor:pointer;margin:0 auto}\n`;
+css+=`.${CN}-wrap img{width:100%;height:auto;display:block;border-radius:${rad}px}\n`;
+css+=`.${CN}-b{position:absolute;top:0;left:0}\n`;
+let aCSS=`transition:all ${speedOut}s ease-in-out !important`;
+if(fA)aCSS+=`;filter:${fA} !important`;
+if(animAstr)aCSS+=`;animation:${animAstr} !important`;
+css+=`.${CN}-a{${aCSS}}\n`;
+let bCSS=`opacity:0 !important;transition:all ${speedOut}s ease-in-out !important`;
+if(fB)bCSS+=`;filter:${fB} !important`;
+if(doZoom)bCSS+=`;transform:scale(1.15) !important`;
+if(doBlur)bCSS+=`;filter:${fB?fB+' ':''}blur(10px) !important`;
+css+=`.${CN}-b{${bCSS}}\n`;
+
 const td=parseFloat(delay)*2+parseFloat(speedIn)*2;
 const p1=Math.round(parseFloat(delay)/td*100);const p2=Math.round((parseFloat(delay)+parseFloat(speedIn))/td*100);
 const p3=Math.round((parseFloat(delay)*2+parseFloat(speedIn))/td*100);
-css+=`@keyframes tr-a-auto{0%,${p1}%{opacity:1${doZoom?';transform:scale(1)':''}}${p2}%,${p3}%{opacity:0${doZoom?';transform:scale(0.95)':''}}100%{opacity:1${doZoom?';transform:scale(1)':''}}}\n`;
-css+=`@keyframes tr-b-auto{0%,${p1}%{opacity:0${doZoom?';transform:scale(1.15)':''}${doBlur?`;filter:${fB?fB+' ':''}blur(10px)`:''}}${p2}%,${p3}%{opacity:1${doZoom?';transform:scale(1)':''}${doBlur?`;filter:${fB||'none'}`:''}}100%{opacity:0${doZoom?';transform:scale(1.15)':''}${doBlur?`;filter:${fB?fB+' ':''}blur(10px)`:''}}}\n`;
+css+=`@keyframes ${CN}-a-auto{0%,${p1}%{opacity:1${doZoom?';transform:scale(1)':''}}${p2}%,${p3}%{opacity:0${doZoom?';transform:scale(0.95)':''}}100%{opacity:1${doZoom?';transform:scale(1)':''}}}\n`;
+css+=`@keyframes ${CN}-b-auto{0%,${p1}%{opacity:0${doZoom?';transform:scale(1.15)':''}${doBlur?`;filter:${fB?fB+' ':''}blur(10px)`:''}}${p2}%,${p3}%{opacity:1${doZoom?';transform:scale(1)':''}${doBlur?`;filter:${fB||'none'}`:''}}100%{opacity:0${doZoom?';transform:scale(1.15)':''}${doBlur?`;filter:${fB?fB+' ':''}blur(10px)`:''}}}\n`;
 const iter=repeat==='1'?'1 forwards':'infinite';
-css+=`.tr-a{animation:tr-a-auto ${td}s ease-in-out ${iter}${animAstr?','+animAstr:''}}\n`;
-css+=`.tr-b{animation:tr-b-auto ${td}s ease-in-out ${iter}${animBstr?','+animBstr:''}}\n`;
-}
+css+=`.${CN}-a{animation:${CN}-a-auto ${td}s ease-in-out ${iter}${animAstr?','+animAstr:''} !important}\n`;
+css+=`.${CN}-b{animation:${CN}-b-auto ${td}s ease-in-out ${iter}${animBstr?','+animBstr:''} !important}\n`;
 allAnims.forEach(a=>{const k=animKF(a,animsA.includes(a)?'a-':'b-');if(k)css+=k+'\n'});
-return`<style>\n${css}</style>\n\n<div class="tr-wrap">\n    <img class="tr-a" src="${urlA}" alt="A" style="outline:none;">\n    <img class="tr-b" src="${urlB}" alt="B" style="outline:none;">\n</div>`}
+return`<style>\n${css}</style>\n\n<div class="${CN}-wrap">\n    <img class="${CN}-a" src="${urlA}" alt="A" style="outline:none;">\n    <img class="${CN}-b" src="${urlB}" alt="B" style="outline:none;">\n</div>`}
 
 const code=build(cA,cB),pv=build(pvA,pvB);
 $('code-out').textContent=code;show('result');$('pv-frame').innerHTML=pv;show('pv-sec');
@@ -309,7 +328,7 @@ const LS_KEY='glkku-tr-presets';
 function getP(){try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]')}catch{return[]}}
 function saveP(l){try{localStorage.setItem(LS_KEY,JSON.stringify(l));return true}catch{alert('localStorage 미지원. JSON 내보내기를 사용하세요.');return false}}
 function collectS(){
-const s={w:V('opt-w'),h:V('opt-h'),rad:V('opt-rad'),trigger:V('opt-trigger'),speedIn:V('opt-speed-in'),speedOut:V('opt-speed-out'),delay:V('opt-delay'),repeat:V('opt-repeat')};
+const s={w:V('opt-w'),h:V('opt-h'),rad:V('opt-rad'),classname:V('opt-classname','tr'),trigger:V('opt-trigger'),speedIn:V('opt-speed-in'),speedOut:V('opt-speed-out'),delay:V('opt-delay'),repeat:V('opt-repeat')};
 s.fade=isOn('fx-fade');s.zoom=isOn('fx-zoom');s.blur=isOn('fx-blur');s.flip=isOn('fx-flip');
 s.fxA=[];document.querySelectorAll('#fa-grid .ci.on').forEach(ci=>s.fxA.push(ci.dataset.fx));
 s.fxAsl={};document.querySelectorAll('#fa-sl .fr').forEach(row=>{const sl=row.querySelector('[data-fx]');if(sl)s.fxAsl[sl.dataset.fx]={v:sl.value,color:row.querySelector('[data-role=color]')?.value||'',alpha:row.querySelector('[data-role=alpha]')?.value||''}});
@@ -320,7 +339,7 @@ s.animAset={};s.animA.forEach(a=>{s.animAset[a]={};(AF[a]||[]).forEach(f=>{s.ani
 s.animBset={};s.animB.forEach(a=>{s.animBset[a]={};(AF[a]||[]).forEach(f=>{s.animBset[a][f.id]=V('b-'+f.id,f.d!=null?String(f.d):'0')})});
 return s}
 function applyS(s){
-if(s.w)$('opt-w').value=s.w;if(s.h)$('opt-h').value=s.h;if(s.rad)$('opt-rad').value=s.rad;
+if(s.w)$('opt-w').value=s.w;if(s.h)$('opt-h').value=s.h;if(s.rad)$('opt-rad').value=s.rad;if(s.classname)$('opt-classname').value=s.classname;
 if(s.trigger){$('opt-trigger').value=s.trigger;$('auto-opts').style.display=s.trigger==='auto'?'':'none'}
 if(s.speedIn)$('opt-speed-in').value=s.speedIn;if(s.speedOut)$('opt-speed-out').value=s.speedOut;if(s.delay)$('opt-delay').value=s.delay;if(s.repeat)$('opt-repeat').value=s.repeat;
 function setT(id,on){const ci=$(id);ci.querySelector('input').checked=on;ci.classList.toggle('on',on)}
